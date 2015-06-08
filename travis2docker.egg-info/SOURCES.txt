@@ -1,0 +1,8 @@
+setup.py
+travis2docker/__init__.py
+travis2docker/travis2docker.py
+travis2docker.egg-info/PKG-INFO
+travis2docker.egg-info/SOURCES.txt
+travis2docker.egg-info/dependency_links.txt
+travis2docker.egg-info/not-zip-safe
+travis2docker.egg-info/top_level.txt
