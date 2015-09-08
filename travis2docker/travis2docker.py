@@ -181,9 +181,8 @@ class travis(object):
             cmd_str = self.extra_env_from_run + cmd_str
             cmd_str = self.scape_bash_command(cmd_str)
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
-            cmd_str = 'RUN echo """%s"""' % (
-                    cmd_str,
-                ) + ' | sudo tee -a /entrypoint.sh \\' + \
+            cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
+                + ' | sudo tee -a /entrypoint.sh \\' + \
                 '\n    && sudo chown %s:%s /entrypoint.sh \\' % (
                     self.docker_user, self.docker_user) + \
                 '\n    && sudo chmod +x /entrypoint.sh'

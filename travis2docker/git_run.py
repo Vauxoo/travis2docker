@@ -85,9 +85,12 @@ class GitRun(object):
             fields = []
         if 'refname' not in fields:
             fields.append('refname')
-        # fields = ['refname','objectname','committerdate:iso8601','authorname','authoremail','subject','committername','committeremail']
+        # fields = ['refname', 'objectname', 'committerdate:iso8601',
+        #           'authorname', 'authoremail','subject','committername',
+        #           'committeremail']
         fmt = "%00".join(["%("+field+")" for field in fields])
-        git_refs = self.run(['for-each-ref', '--format', fmt, '--sort=refname'] + refs)
+        git_refs = self.run([
+            'for-each-ref', '--format', fmt, '--sort=refname'] + refs)
         git_refs = git_refs.strip()
         refs = [[decode_utf(field) for field in line.split(
             '\x00')] for line in git_refs.split('\n')]
