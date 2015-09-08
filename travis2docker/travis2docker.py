@@ -31,66 +31,12 @@ import os
 import re
 import shutil
 import stat
-import subprocess
 import types
 from sys import stdout
 from tempfile import gettempdir
 
 import yaml
-
-
-class git(object):
-
-    def __init__(self, repo_git, path):
-        self.repo_git = repo_git
-        self.path = path
-        self.repo_git_regex = r"(?P<host>(git@|https://)([\w\.@]+)(/|:))" + \
-            r"(?P<owner>[~\w,\-,\_]+)/" + \
-            r"(?P<repo>[\w,\-,\_]+)(.git){0,1}((/){0,1})"
-        match_object = re.search(self.repo_git_regex, repo_git)
-        if match_object:
-            self.host = match_object.group("host")
-            self.owner = match_object.group("owner")
-            self.repo = match_object.group("repo")
-        else:
-            self.host, self.owner, self.repo = False, False, False
-
-    def get_config_data(self, field=None):
-        if field is None:
-            field = "-l"
-        res = self.run(["config", field])
-        if res:
-            res = res.strip("\n").strip()
-        return res
-
-    def run(self, cmd):
-        """Execute git command in bash"""
-        cmd = ['git', '--git-dir=%s' % self.path] + cmd
-        # print "cmd", ' '.join(cmd)
-        try:
-            return subprocess.check_output(cmd)
-        except BaseException:
-            return None
-
-    def update(self):
-        """Get a repository git or update it"""
-        if not os.path.isdir(os.path.join(self.path)):
-            os.makedirs(self.path)
-        if not os.path.isdir(os.path.join(self.path, 'refs')):
-            subprocess.check_output([
-                'git', 'clone', '--bare', self.repo_git, self.path
-            ])
-        self.run(['gc', '--auto', '--prune=all'])
-        self.run(['fetch', '-p', 'origin', '+refs/heads/*:refs/heads/*'])
-        self.run(['fetch', '-p', 'origin', '+refs/pull/*/head:refs/pull/*'])
-
-    def show_file(self, git_file, sha):
-        result = self.run(["show", "%s:%s" % (sha, git_file)])
-        return result
-
-    def get_sha(self, revision):
-        result = self.run(["rev-parse", revision])
-        return result
+from git_run import GitRun
 
 
 # TODO: Change name of class and variables to cmd
@@ -109,7 +55,7 @@ class travis(object):
         return yaml_loaded
 
     def get_folder_name(self, name):
-        for invalid_char in '@:/':
+        for invalid_char in '@:/#':
             name = name.replace(invalid_char, '_')
         return name
 
@@ -148,7 +94,7 @@ class travis(object):
         self.git_project = git_project
         self.revision = revision
         git_path = self.get_repo_path(self.root_path)
-        self.git_obj = git(git_project, git_path)
+        self.git_obj = GitRun(git_project, git_path)
         self.travis_data = self.load_travis_file(revision)
         self.sha = self.git_obj.get_sha(revision)
         if not self.travis_data:
@@ -235,12 +181,11 @@ class travis(object):
             cmd_str = self.extra_env_from_run + cmd_str
             cmd_str = self.scape_bash_command(cmd_str)
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
-            cmd_str = 'RUN sudo touch /entrypoint.sh \\' + \
+            cmd_str = 'RUN echo """%s"""' % (
+                    cmd_str,
+                ) + ' | sudo tee -a /entrypoint.sh \\' + \
                 '\n    && sudo chown %s:%s /entrypoint.sh \\' % (
                     self.docker_user, self.docker_user) + \
-                '\n    && echo """%s"""' % (
-                    cmd_str,
-                ) + ' > /entrypoint.sh \\' + \
                 '\n    && sudo chmod +x /entrypoint.sh'
             cmd_str += '\nENTRYPOINT /entrypoint.sh'
         return cmd_str
@@ -268,6 +213,8 @@ class travis(object):
 
         for line in section_data:
             if line in ['global', 'matrix']:
+                continue
+            if not isinstance(line, str):
                 continue
             docker_env = ""
             for var, value in self.env_regex.findall(line):
@@ -316,8 +263,9 @@ class travis(object):
                 "git init ${TRAVIS_BUILD_DIR}",
                 "cd ${TRAVIS_BUILD_DIR}",
                 "git remote add origin " + project,
-                "git fetch -p origin %s" % (cmd_refs),
+                "git fetch --update-head-ok -p origin %s" % (cmd_refs),
                 "git reset --hard " + self.revision,
+
             ]
             git_user_email = self.git_obj.get_config_data("user.email")
             if git_user_email:
@@ -342,10 +290,10 @@ class travis(object):
                   '\nUSER ' + self.docker_user + \
                   '\nADD ' + os.path.join("files", 'ssh') + ' ' + \
                   os.path.join(home_user_path, '.ssh') + \
-                  "\nRUN sudo chown -R %s:%s %s" % (
-                      self.docker_user, self.docker_user, home_user_path) + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\nWORKDIR ${TRAVIS_BUILD_DIR}" + \
+                  "\nRUN sudo chown -R %s:%s %s" % (
+                      self.docker_user, self.docker_user, home_user_path) + \
                   "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
                   "\n"
         return cmd
@@ -404,7 +352,7 @@ class travis(object):
             if fname_build:
                 with open(fname_build, "w") as fbuild:
                     fbuild.write(
-                        "docker build -t %s %s" % (
+                        "docker build $1 -t %s %s" % (
                             image_name,
                             os.path.dirname(fname)
                         )
@@ -414,7 +362,7 @@ class travis(object):
             if fname_run:
                 with open(fname_run, "w") as fbuild:
                     fbuild.write(
-                        "docker run $1 -itP %s" % (
+                        "docker run $1 -itP %s $2" % (
                             image_name
                         )
                     )
