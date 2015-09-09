@@ -4,7 +4,7 @@
 
 # travis2docker
 
-ToDo: Add documentation
+Script to generate Dockerfile from .travis.yml file
 
 ## Install
 `# pip install git+https://github.com/Vauxoo/travis2docker.git`
