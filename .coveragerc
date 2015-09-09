@@ -2,12 +2,10 @@
 
 [report]
 include =
-    pylint_oca/*
+    travis2docker/*
 
 omit =
-    */test_repo/*
     *__init__.py
-    *__openerp__.py
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
