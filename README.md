@@ -12,7 +12,7 @@ Script to generate Dockerfile from .travis.yml file
 ```bash
 $ git clone https://github.com/Vauxoo/travis2docker.git
 $ cd travis2docker
-# git pip install
+# pip install .
 ```
 
 ### From remote source
