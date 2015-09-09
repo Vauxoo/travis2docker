@@ -7,7 +7,19 @@
 Script to generate Dockerfile from .travis.yml file
 
 ## Install
+
+### local source
+```bash
+$ git clone https://github.com/Vauxoo/travis2docker.git
+$ cd travis2docker
+# git pip install
+```
+
+### From remote source
 `# pip install git+https://github.com/Vauxoo/travis2docker.git`
+
+Or you can use pypi
+`# pip install travis2docker
 
 ## Usage
  `travisfile2dockerfile REPO_URL BRANCH`
