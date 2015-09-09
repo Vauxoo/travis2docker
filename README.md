@@ -7,7 +7,10 @@
 ToDo: Add documentation
 
 ## Install
-`# pip install .`
+`# pip install git+https://github.com/Vauxoo/travis2docker.git`
 
 ## Usage
- `travis2docker REPO_URL BRANCH`
+ `travisfile2dockerfile REPO_URL BRANCH`
+
+ For more information execute:
+ `travisfile2dockerfile --help`
