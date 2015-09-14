@@ -339,7 +339,8 @@ class travis(object):
                 )
                 image_name = self.git_obj.owner + '-' + \
                     self.git_obj.repo + \
-                    ":" + self.get_folder_name(self.revision)
+                    ":" + self.get_folder_name(self.revision) + \
+                    "_" + str(count)
                 image_name = image_name.lower()
             else:
                 raise Exception(
