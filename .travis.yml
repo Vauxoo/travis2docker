@@ -4,6 +4,11 @@ sudo: false
 
 cache: pip
 
+addons:
+  apt:
+    packages:
+      - python-yaml
+
 python:
   - '2.7'
 
