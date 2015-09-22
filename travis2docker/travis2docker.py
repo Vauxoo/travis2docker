@@ -232,8 +232,8 @@ class travis(object):
             or os.path.join("/home", self.docker_user)
         project, branch = self.git_project, self.revision
         travis_build_dir = os.path.join(
-            home_user_path, "myproject",
-            os.path.splitext(os.path.basename(project))[0]
+            home_user_path, "build",
+            self.git_obj.owner, self.git_obj.repo,
         )
         if self.command_format == 'bash':
             cmd = "\nsudo su - " + self.docker_user + \
