@@ -68,7 +68,7 @@ class travis(object):
         name = self.get_folder_name(self.git_project)
         script_path = os.path.join(
             root_path, 'script',
-            name, self.get_folder_name(self.revision))
+            name, self.get_folder_name(self.revision), self.sha)
         return script_path
 
     def __init__(self, git_project, revision,
