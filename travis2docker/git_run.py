@@ -88,7 +88,7 @@ class GitRun(object):
         # fields = ['refname', 'objectname', 'committerdate:iso8601',
         #           'authorname', 'authoremail','subject','committername',
         #           'committeremail']
-        fmt = "%00".join(["%("+field+")" for field in fields])
+        fmt = "%00".join(["%(" + field + ")" for field in fields])
         git_refs = self.run([
             'for-each-ref', '--format', fmt, '--sort=refname'] + refs)
         git_refs = git_refs.strip()
@@ -118,4 +118,6 @@ class GitRun(object):
 
     def get_sha(self, revision):
         result = self.run(["rev-parse", revision])
-        return result.strip(' \n') if isinstance(result, basestring) else result
+        return result.strip(' \n') \
+            if isinstance(result, basestring) \
+            else result
