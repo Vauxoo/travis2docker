@@ -177,15 +177,20 @@ class travis(object):
         cmd_str = self.get_travis2docker_run(
             section_data, custom_command_format='bash',
             add_extra_env=False)
+        if self.docker_user == 'root':
+            sudo_prefix = ''
+        else:
+            sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
             cmd_str = self.extra_env_from_run + cmd_str
             cmd_str = self.scape_bash_command(cmd_str)
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
-                + ' | sudo tee -a /entrypoint.sh \\' + \
-                '\n    && sudo chown %s:%s /entrypoint.sh \\' % (
+                + ' | ' + sudo_prefix + 'tee -a /entrypoint.sh \\' + \
+                '\n    && ' + sudo_prefix + \
+                ' chown %s:%s /entrypoint.sh \\' % (
                     self.docker_user, self.docker_user) + \
-                '\n    && sudo chmod +x /entrypoint.sh'
+                '\n    && ' + sudo_prefix + ' chmod +x /entrypoint.sh'
             cmd_str += '\nENTRYPOINT /entrypoint.sh'
         return cmd_str
 
@@ -284,6 +289,10 @@ class travis(object):
                 cmd_git_clone.append(
                     "git config --unset --global user.name"
                 )
+            if self.docker_user == 'root':
+                sudo_prefix = ''
+            else:
+                sudo_prefix = 'sudo'
             cmd = 'FROM ' + (self.travis_data.get('build_image', False) or
                              self.default_docker_image) + \
                   '\nUSER ' + self.docker_user + \
@@ -291,8 +300,9 @@ class travis(object):
                   os.path.join(home_user_path, '.ssh') + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\nWORKDIR ${TRAVIS_BUILD_DIR}" + \
-                  "\nRUN sudo chown -R %s:%s %s" % (
-                      self.docker_user, self.docker_user, home_user_path) + \
+                  "\nRUN %s chown -R %s:%s %s" % (
+                      sudo_prefix, self.docker_user,
+                      self.docker_user, home_user_path) + \
                   "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
                   "\n"
         return cmd
