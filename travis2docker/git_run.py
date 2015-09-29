@@ -117,5 +117,5 @@ class GitRun(object):
         return result
 
     def get_sha(self, revision):
-        result = self.run(["rev-parse", revision]).strip(' \n')
-        return result
+        result = self.run(["rev-parse", revision])
+        return result.strip(' \n') if isinstance(result, basestring) else result
