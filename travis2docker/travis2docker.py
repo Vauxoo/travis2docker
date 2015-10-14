@@ -296,6 +296,7 @@ class travis(object):
             cmd = 'FROM ' + (self.travis_data.get('build_image', False) or
                              self.default_docker_image) + \
                   '\nUSER ' + self.docker_user + \
+                  '\nENV HOME=' + home_user_path + \
                   '\nADD ' + os.path.join("files", 'ssh') + ' ' + \
                   os.path.join(home_user_path, '.ssh') + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
