@@ -225,7 +225,10 @@ class travis(object):
                 if self.command_format == 'bash':
                     docker_env += "\nexport %s=%s" % (var, value)
                 elif self.command_format == 'docker':
-                    docker_env += "\nENV %s=%s" % (var, value)
+                    if var:
+                        # To support case `export VAR="param1=value1"`
+                        docker_env += '\nENV '
+                    docker_env += "%s=%s" % (var, value)
             yield docker_env
 
     def get_travis2docker_python(self, section_data):
