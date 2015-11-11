@@ -113,7 +113,7 @@ class travis(object):
         self.travis2docker_section_dict = dict(self.travis2docker_section)
         self.scripts_root_path = self.get_script_path(self.root_path)
         env_regex_str = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + \
-            r"(?P<value>[\w\.\-\_/\$\{\}\:,]*)[\"\']{0,1}"
+            r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
         export_regex_str = r"(?P<export>export|EXPORT)( )+" + env_regex_str
         self.env_regex = re.compile(env_regex_str, re.M)
         self.export_regex = re.compile(export_regex_str, re.M)
@@ -161,8 +161,9 @@ class travis(object):
         for line in section_data:
             export_regex_findall = self.export_regex.findall(line)
             for dummy, dummy, var, value in export_regex_findall:
-                self.extra_env_from_run += "%s=%s " % (var, value)
-            extra_env = add_extra_env and self.extra_env_from_run or ''
+                self.extra_env_from_run += "\n%s=%s " % (var, value)
+            extra_env = add_extra_env and \
+                self.extra_env_from_run.replace('\n', ' ') or ''
             if not export_regex_findall:
                 if custom_command_format == 'bash':
                     docker_run += '\n' + extra_env + line
@@ -182,9 +183,10 @@ class travis(object):
         else:
             sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
-            cmd_str = self.extra_env_from_run + cmd_str
-            cmd_str = self.scape_bash_command(cmd_str)
+            cmd_str = self.extra_env_from_run.replace('\n', '\nexport ') + \
+                '\n' + cmd_str.replace('\n', ' ').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
+            cmd_str = cmd_str.replace('$', '\$')
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
                 + ' | ' + sudo_prefix + 'tee -a /entrypoint.sh \\' + \
                 '\n    && ' + sudo_prefix + \
