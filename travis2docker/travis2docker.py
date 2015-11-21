@@ -159,6 +159,7 @@ class travis(object):
             custom_command_format = self.command_format
         docker_run = ''
         for line in section_data:
+            line = line.strip()
             export_regex_findall = self.export_regex.findall(line)
             for dummy, dummy, var, value in export_regex_findall:
                 self.extra_env_from_run += "\n%s=%s " % (var, value)
@@ -168,6 +169,8 @@ class travis(object):
                 if custom_command_format == 'bash':
                     docker_run += '\n' + extra_env + line
                 elif custom_command_format == 'docker':
+                    if line.startswith('(') and line.endswith(')'):
+                        line = line[1:-1]
                     docker_run += '\nRUN ' + extra_env + line
         return docker_run
 
@@ -186,7 +189,7 @@ class travis(object):
             cmd_str = self.extra_env_from_run.replace('\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', ' ').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
-            cmd_str = cmd_str.replace('$', '\$')
+            cmd_str = cmd_str.replace('$', r'\$')
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
                 + ' | ' + sudo_prefix + 'tee -a /entrypoint.sh \\' + \
                 '\n    && ' + sudo_prefix + \
@@ -247,9 +250,11 @@ class travis(object):
         )
         if self.command_format == 'bash':
             cmd = "\nsudo su - " + self.docker_user + \
-                  "\nsudo chown -R %s:%s %s" % (self.docker_user, self.docker_user, home_user_path) + \
+                  "\nsudo chown -R %s:%s %s" % (
+                    self.docker_user, self.docker_user, home_user_path) + \
                   "\nexport TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
-                  "\ngit clone --single-branch %s -b %s " % (project, branch) + \
+                  "\ngit clone --single-branch %s -b %s " % (
+                    project, branch) + \
                   "${TRAVIS_BUILD_DIR}" + \
                   "\n"
         elif self.command_format == 'docker':
