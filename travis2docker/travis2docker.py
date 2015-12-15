@@ -251,10 +251,11 @@ class travis(object):
         if self.command_format == 'bash':
             cmd = "\nsudo su - " + self.docker_user + \
                   "\nsudo chown -R %s:%s %s" % (
-                    self.docker_user, self.docker_user, home_user_path) + \
+                      self.docker_user, self.docker_user,
+                      home_user_path) + \
                   "\nexport TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\ngit clone --single-branch %s -b %s " % (
-                    project, branch) + \
+                      project, branch) + \
                   "${TRAVIS_BUILD_DIR}" + \
                   "\n"
         elif self.command_format == 'docker':
