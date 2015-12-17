@@ -189,7 +189,7 @@ class travis(object):
             cmd_str = self.extra_env_from_run.replace('\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', ' ').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
-            cmd_str = cmd_str.replace('$', r'\$')
+            cmd_str = cmd_str.replace('$', r'\$').replace('"', r'\"')
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
                 + ' | ' + sudo_prefix + 'tee -a /entrypoint.sh \\' + \
                 '\n    && ' + sudo_prefix + \
