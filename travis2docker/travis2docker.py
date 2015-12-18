@@ -451,9 +451,9 @@ def main():
         default=None,
     )
     parser.add_argument(
-        '--add-remote', dest='remotes', nargs='+',
-        help='Add git remote to git of build path.'
-             "\nUse remote name. E.g. 'Vauxoo'",
+        '--add-remote', dest='remotes',
+        help='Add git remote to git of build path, separated by a comma.'
+             "\nUse remote name. E.g. 'Vauxoo,moylop260'",
     )
     args = parser.parse_args()
     sha = args.git_revision
@@ -461,7 +461,7 @@ def main():
     docker_user = args.docker_user
     root_path = args.root_path
     default_docker_image = args.default_docker_image
-    remotes = args.remotes
+    remotes = args.remotes and args.remotes.split(',')
     travis_obj = travis(
         git_repo,
         sha,
