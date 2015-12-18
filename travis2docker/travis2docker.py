@@ -279,7 +279,8 @@ class travis(object):
             cmd_git_clone = [
                 "git init ${TRAVIS_BUILD_DIR}",
                 "cd ${TRAVIS_BUILD_DIR}",
-                "git remote add " + self.git_obj.owner + " " + project,
+                "git remote add %s %s" % (
+                    self.git_obj.owner.lower(), project),
                 "git fetch --update-head-ok -p %s %s" % (
                     self.git_obj.owner, cmd_refs),
                 "git checkout -qf " + self.revision,
@@ -306,7 +307,7 @@ class travis(object):
                 for remote in self.remotes:
                     git_remote_obj = GitRun(remote, '/')
                     cmd_git_clone.append('git add remote %s %s' % (
-                        git_remote_obj.owner, remote))
+                        git_remote_obj.owner.lower(), remote))
             if self.docker_user == 'root':
                 sudo_prefix = ''
             else:
