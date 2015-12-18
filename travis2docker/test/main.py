@@ -34,3 +34,12 @@ class MainTest(unittest.TestCase):
             command_format='bash', docker_user='t2d_test',
             default_docker_image='t2d_test')
         travis_obj.get_travis2docker()
+
+    def test_40_t2d_remotes(self):
+        '''Test travis2docker remotes'''
+        travis_obj = travis(
+            self.repo_test, self.branch_test,
+            command_format='docker', docker_user='t2d_test',
+            default_docker_image='t2d_test',
+            remotes=['moylop260', 'vauxoo-dev'])
+        travis_obj.get_travis2docker()
