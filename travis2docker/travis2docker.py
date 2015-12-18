@@ -305,10 +305,12 @@ class travis(object):
                 )
             if self.remotes:
                 for remote in self.remotes:
-                    git_remote_obj = GitRun(remote, '/')
-                    if git_remote_obj.owner.lower() != remote_default:
+                    remote = remote.lower()
+                    if remote != remote_default:
+                        git_remote_url = self.git_obj.host + remote + '/' + \
+                            self.git_obj.repo + '.git'
                         cmd_git_clone.append('git remote add %s %s' % (
-                            git_remote_obj.owner.lower(), remote))
+                            remote, git_remote_url))
             if self.docker_user == 'root':
                 sudo_prefix = ''
             else:
