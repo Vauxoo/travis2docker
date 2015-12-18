@@ -276,13 +276,13 @@ class travis(object):
                     self.revision, self.revision)
 
             # TODO: Use sha
+            remote_default = self.git_obj.owner.lower()
             cmd_git_clone = [
                 "git init ${TRAVIS_BUILD_DIR}",
                 "cd ${TRAVIS_BUILD_DIR}",
-                "git remote add %s %s" % (
-                    self.git_obj.owner.lower(), project),
+                "git remote add %s %s" % (remote_default, project),
                 "git fetch --update-head-ok -p %s %s" % (
-                    self.git_obj.owner, cmd_refs),
+                    remote_default, cmd_refs),
                 "git checkout -qf " + self.revision,
             ]
             git_user_email = self.git_obj.get_config_data("user.email")
@@ -306,8 +306,9 @@ class travis(object):
             if self.remotes:
                 for remote in self.remotes:
                     git_remote_obj = GitRun(remote, '/')
-                    cmd_git_clone.append('git add remote %s %s' % (
-                        git_remote_obj.owner.lower(), remote))
+                    if git_remote_obj.owner.lower() != remote_default:
+                        cmd_git_clone.append('git remote add %s %s' % (
+                            git_remote_obj.owner.lower(), remote))
             if self.docker_user == 'root':
                 sudo_prefix = ''
             else:
@@ -449,7 +450,8 @@ def main():
     )
     parser.add_argument(
         '--add-remote', dest='remotes', nargs='+',
-        help='Add git remote to build branch',
+        help='Add git remote to git of build path.'
+             "\nUse remote name. E.g. 'Vauxoo'",
     )
     args = parser.parse_args()
     sha = args.git_revision
