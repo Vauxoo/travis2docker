@@ -279,7 +279,7 @@ class travis(object):
                 "cd ${TRAVIS_BUILD_DIR}",
                 "git remote add origin " + project,
                 "git fetch --update-head-ok -p origin %s" % (cmd_refs),
-                "git reset --hard " + self.revision,
+                "git checkout -qf " + self.revision,
 
             ]
             git_user_email = self.git_obj.get_config_data("user.email")
