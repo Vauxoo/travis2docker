@@ -73,7 +73,8 @@ class travis(object):
 
     def __init__(self, git_project, revision,
                  command_format='docker', docker_user=None,
-                 root_path=None, default_docker_image=None):
+                 root_path=None, default_docker_image=None,
+                 remotes=None):
         """
         Method Constructor
         @fname_dockerfile: str name of file dockerfile to save.
@@ -120,6 +121,7 @@ class travis(object):
         self.extra_env_from_run = ""
         self.command_format = command_format
         self.docker_user = docker_user or 'root'
+        self.remotes = remotes
 
     # def get_travis_type(self, repo_git):
     #     self.repo_git_type = None
@@ -277,10 +279,10 @@ class travis(object):
             cmd_git_clone = [
                 "git init ${TRAVIS_BUILD_DIR}",
                 "cd ${TRAVIS_BUILD_DIR}",
-                "git remote add origin " + project,
-                "git fetch --update-head-ok -p origin %s" % (cmd_refs),
+                "git remote add " + self.git_obj.owner + " " + project,
+                "git fetch --update-head-ok -p %s %s" % (
+                    self.git_obj.owner, cmd_refs),
                 "git checkout -qf " + self.revision,
-
             ]
             git_user_email = self.git_obj.get_config_data("user.email")
             if git_user_email:
@@ -300,6 +302,11 @@ class travis(object):
                 cmd_git_clone.append(
                     "git config --unset --global user.name"
                 )
+            if self.remotes:
+                for remote in self.remotes:
+                    git_remote_obj = GitRun(remote, '/')
+                    cmd_git_clone.append('git add remote %s %s' % (
+                        git_remote_obj.owner, remote))
             if self.docker_user == 'root':
                 sudo_prefix = ''
             else:
@@ -439,18 +446,24 @@ def main():
              "\nDefault: 'tmp' dir of your O.S.",
         default=None,
     )
+    parser.add_argument(
+        '--add-remote', dest='remotes', nargs='+',
+        help='Add git remote to build branch',
+    )
     args = parser.parse_args()
     sha = args.git_revision
     git_repo = args.git_repo_url
     docker_user = args.docker_user
     root_path = args.root_path
     default_docker_image = args.default_docker_image
+    remotes = args.remotes
     travis_obj = travis(
         git_repo,
         sha,
         docker_user=docker_user,
         default_docker_image=default_docker_image,
         root_path=root_path,
+        remotes=remotes,
     )
     return travis_obj.get_travis2docker()
 
