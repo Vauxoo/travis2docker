@@ -319,6 +319,8 @@ class travis(object):
                              self.default_docker_image) + \
                   '\nUSER ' + self.docker_user + \
                   '\nENV HOME=' + home_user_path + \
+                  '\nENV TRAVIS_REPO_SLUG=%s/%s' % (
+                      self.git_obj.owner, self.git_obj.repo) + \
                   '\nADD ' + os.path.join("files", 'ssh') + ' ' + \
                   os.path.join(home_user_path, '.ssh') + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
