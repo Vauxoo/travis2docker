@@ -189,7 +189,7 @@ class travis(object):
             sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
             cmd_str = self.extra_env_from_run.replace('\n', '\nexport ') + \
-                '\n' + cmd_str.replace('\n', ' ').strip()
+                '\n' + cmd_str.replace('\n', '\\\\n').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
             cmd_str = cmd_str.replace('$', r'\$').replace('"', r'\"')
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
