@@ -205,12 +205,14 @@ class travis(object):
         global_data_cmd = []
         matrix_data_cmd = []
         if 'global' in section_data:
+            # The section 'global' is used as a item
+            # Then the global_data_cmd even is a list of a item
             global_data = section_data.pop('global')
-            global_data_cmd = [
+            global_data_cmd = [''.join([
                 global_env
                 for global_env
                 in self.get_travis2docker_env(global_data)
-            ]
+            ])]
         if 'matrix' in section_data:
             matrix_data = section_data.pop('matrix')
             matrix_data_cmd = [
