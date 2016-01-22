@@ -271,7 +271,7 @@ class travis(object):
                 shutil.rmtree(ssh_dest)
             shutil.copytree(
                 os.path.expanduser("~/.ssh"),
-                os.path.join(dkr_files_path, 'ssh')
+                ssh_dest
             )
             cmd_refs = 'pull' in self.revision and \
                 '+refs/%s/head:refs/%s' % (
