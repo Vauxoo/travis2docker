@@ -266,11 +266,13 @@ class travis(object):
             dkr_files_path = os.path.join(dockerfile_path, "files")
             if not os.path.exists(dkr_files_path):
                 os.makedirs(dkr_files_path)
-            if not os.path.exists(os.path.join(dkr_files_path, 'ssh')):
-                shutil.copytree(
-                    os.path.expanduser("~/.ssh"),
-                    os.path.join(dkr_files_path, 'ssh')
-                )
+            ssh_dest = os.path.join(dkr_files_path, 'ssh')
+            if os.path.exists(ssh_dest):
+                shutil.rmtree(ssh_dest)
+            shutil.copytree(
+                os.path.expanduser("~/.ssh"),
+                os.path.join(dkr_files_path, 'ssh')
+            )
             cmd_refs = 'pull' in self.revision and \
                 '+refs/%s/head:refs/%s' % (
                     self.revision, self.revision) or \
