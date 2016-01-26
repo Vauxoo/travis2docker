@@ -115,7 +115,7 @@ class travis(object):
         self.scripts_root_path = self.get_script_path(self.root_path)
         env_regex_str = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + \
             r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
-        export_regex_str = r"(?P<export>export|EXPORT)( )+" + env_regex_str
+        export_regex_str = r"^(?P<export>export|EXPORT)( )+" + env_regex_str
         self.env_regex = re.compile(env_regex_str, re.M)
         self.export_regex = re.compile(export_regex_str, re.M)
         self.extra_env_from_run = ""
