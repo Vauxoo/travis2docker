@@ -74,7 +74,7 @@ class travis(object):
     def __init__(self, git_project, revision,
                  command_format='docker', docker_user=None,
                  root_path=None, default_docker_image=None,
-                 remotes=None):
+                 remotes=None, include_after_success=None):
         """
         Method Constructor
         @fname_dockerfile: str name of file dockerfile to save.
@@ -98,6 +98,7 @@ class travis(object):
         self.git_obj = GitRun(git_project, git_path)
         self.travis_data = self.load_travis_file(revision)
         self.sha = self.git_obj.get_sha(revision)
+        self.include_after_success = include_after_success
         if not self.travis_data:
             raise Exception(
                 "Make sure you have access to repository"
@@ -110,6 +111,7 @@ class travis(object):
             ('env', 'env'),
             ('install', 'run'),
             ('script', 'script'),
+            ('after_success', 'script'),
         ]
         self.travis2docker_section_dict = dict(self.travis2docker_section)
         self.scripts_root_path = self.get_script_path(self.root_path)
@@ -461,6 +463,11 @@ def main():
         help='Add git remote to git of build path, separated by a comma.'
              "\nUse remote name. E.g. 'Vauxoo,moylop260'",
     )
+    parser.add_argument(
+        '--include-after-success', dest='include_after_success',
+        action='store_true', default=False,
+        help='Include `travis_after_success` section to entrypoint',
+    )
     args = parser.parse_args()
     sha = args.git_revision
     git_repo = args.git_repo_url
@@ -468,6 +475,7 @@ def main():
     root_path = args.root_path
     default_docker_image = args.default_docker_image
     remotes = args.remotes and args.remotes.split(',')
+    include_after_success = args.include_after_success
     travis_obj = travis(
         git_repo,
         sha,
@@ -475,6 +483,7 @@ def main():
         default_docker_image=default_docker_image,
         root_path=root_path,
         remotes=remotes,
+        include_after_success=include_after_success,
     )
     return travis_obj.get_travis2docker()
 
