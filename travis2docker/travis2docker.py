@@ -193,13 +193,14 @@ class travis(object):
             cmd_str = self.extra_env_from_run.replace('\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', '\\\\n').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
-            cmd_str = cmd_str.replace('$', r'\$').replace('"', r'\"')
+            cmd_str = cmd_str.replace('$', r'\$').replace('"', r'\"').replace("'", r"\'").replace("(", r"\(").replace(")", r"\)")
             cmd_str = 'RUN echo """%s"""' % (cmd_str,) \
                 + ' | ' + sudo_prefix + 'tee -a /entrypoint.sh \\' + \
                 '\n    && ' + sudo_prefix + \
                 ' chown %s:%s /entrypoint.sh \\' % (
                     self.docker_user, self.docker_user) + \
-                '\n    && ' + sudo_prefix + ' chmod +x /entrypoint.sh'
+                '\n    && ' + sudo_prefix + ' chmod +x /entrypoint.sh \\' + \
+                '\n    && sed -i -e "s/\\\\\\\'/\\\'/g" /entrypoint.sh'
             cmd_str += '\nENTRYPOINT /entrypoint.sh'
         return cmd_str
 
