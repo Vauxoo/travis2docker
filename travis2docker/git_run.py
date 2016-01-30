@@ -73,10 +73,17 @@ class GitRun(object):
         cmd = ['git', '--git-dir=%s' % self.path] + cmd
         print "cmd list", cmd
         print "cmd", ' '.join(cmd)
+        res = None
         try:
-            return subprocess.check_output(cmd)
+            res = subprocess.check_output(cmd)
         except BaseException:
-            return None
+            pass
+        if res:
+            try:
+                res = res.decode()
+            except UnicodeDecodeError:
+                res = res.decode('utf-8')
+        return res
 
     def get_ref_data(self, refs=None, fields=None):
         if refs is None:
