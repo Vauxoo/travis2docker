@@ -386,7 +386,7 @@ class travis(object):
                     "No command format found %s" % (self.command_format)
                 )
             with open(fname, "w") as fdockerfile:
-                fdockerfile.write(cmd)
+                fdockerfile.write(cmd.encode('utf-8'))
 
             if fname_build:
                 with open(fname_build, "w") as fbuild:
