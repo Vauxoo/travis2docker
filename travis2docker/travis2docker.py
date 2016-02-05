@@ -190,7 +190,8 @@ class travis(object):
         else:
             sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
-            cmd_str = "#!/bin/bash" + "\n" + self.extra_env_from_run.replace('\n', '\nexport ') + \
+            cmd_str = "#!/bin/bash" + "\n" + self.extra_env_from_run.replace(
+                '\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', '\\\\n').strip()
             cmd_str = '\\\\n'.join(cmd_str.strip('\n').split('\n'))
             cmd_str = cmd_str.replace('$', r'\$').replace('"', r'\"')
@@ -403,7 +404,8 @@ class travis(object):
             if fname_run:
                 with open(fname_run, "w") as fbuild:
                     fbuild.write(
-                        "#!/bin/bash\ndocker run $1 -itP %s $2\n" % (
+                        "#!/bin/bash\ndocker run " +
+                        "$1 -e LANG=C.UTF-8 -itP %s $2\n" % (
                             image_name
                         )
                     )
