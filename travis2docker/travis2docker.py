@@ -74,7 +74,8 @@ class travis(object):
     def __init__(self, git_project, revision,
                  command_format='docker', docker_user=None,
                  root_path=None, default_docker_image=None,
-                 remotes=None, include_after_success=None):
+                 remotes=None, include_after_success=None,
+                 run_extra_args=None,):
         """
         Method Constructor
         @fname_dockerfile: str name of file dockerfile to save.
@@ -99,6 +100,7 @@ class travis(object):
         self.travis_data = self.load_travis_file(revision)
         self.sha = self.git_obj.get_sha(revision)
         self.include_after_success = include_after_success
+        self.run_extra_args = run_extra_args
         if not self.travis_data:
             raise Exception(
                 "Make sure you have access to repository"
@@ -405,8 +407,9 @@ class travis(object):
                 with open(fname_run, "w") as fbuild:
                     fbuild.write(
                         "#!/bin/bash\ndocker run " +
-                        "$1 -e LANG=C.UTF-8 -itP %s $2\n" % (
-                            image_name
+                        "$1 %s %s $2\n" % (
+                            self.run_extra_args,
+                            image_name,
                         )
                     )
                 st = os.stat(fname_run)
@@ -470,6 +473,11 @@ def main():
         action='store_true', default=False,
         help='Include `travis_after_success` section to entrypoint',
     )
+    parser.add_argument(
+        '--run-extra-args', dest='run_extra_args',
+        help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
+        default='-itP -e LANG=C.UTF-8',
+    )
     args = parser.parse_args()
     sha = args.git_revision
     git_repo = args.git_repo_url
@@ -478,6 +486,7 @@ def main():
     default_docker_image = args.default_docker_image
     remotes = args.remotes and args.remotes.split(',')
     include_after_success = args.include_after_success
+    run_extra_args = args.run_extra_args
     travis_obj = travis(
         git_repo,
         sha,
@@ -486,6 +495,7 @@ def main():
         root_path=root_path,
         remotes=remotes,
         include_after_success=include_after_success,
+        run_extra_args=run_extra_args,
     )
     return travis_obj.get_travis2docker()
 
