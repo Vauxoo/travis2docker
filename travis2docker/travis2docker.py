@@ -75,7 +75,8 @@ class travis(object):
                  command_format='docker', docker_user=None,
                  root_path=None, default_docker_image=None,
                  remotes=None, include_after_success=None,
-                 run_extra_args=None,):
+                 run_extra_args=None, remove_after_success=None,
+                 include_cleanup=None, no_cache=None):
         """
         Method Constructor
         @fname_dockerfile: str name of file dockerfile to save.
@@ -101,6 +102,9 @@ class travis(object):
         self.sha = self.git_obj.get_sha(revision)
         self.include_after_success = include_after_success
         self.run_extra_args = run_extra_args
+        self.remove_after_success = remove_after_success
+        self.include_cleanup = include_cleanup
+        self.no_cache = no_cache
         if not self.travis_data:
             raise Exception(
                 "Make sure you have access to repository"
@@ -344,6 +348,8 @@ class travis(object):
     def get_travis2docker_iter(self):
         travis2docker_cmd_static_str = ""
         travis2docker_cmd_iter_list = []
+        if self.remove_after_success:
+            self.travis2docker_section.remove(('after_success', 'script'))
         for travis_section, dummy in self.travis2docker_section:
             travis2docker_section = self.get_travis_section(travis_section)
             if isinstance(travis2docker_section, types.GeneratorType):
@@ -396,7 +402,8 @@ class travis(object):
             if fname_build:
                 with open(fname_build, "w") as fbuild:
                     fbuild.write(
-                        "#!/bin/bash\ndocker build $1 -t %s %s\n" % (
+                        "#!/bin/bash\ndocker build $1 %s -t %s %s\n" % (
+                            '--no-cache' if self.no_cache else '',
                             image_name,
                             os.path.dirname(fname)
                         )
@@ -412,6 +419,10 @@ class travis(object):
                             image_name,
                         )
                     )
+                    if self.include_cleanup:
+                        fbuild.write(
+                            "docker rmi -f '%s'\n" % image_name
+                        )
                 st = os.stat(fname_run)
                 os.chmod(fname_run, st.st_mode | stat.S_IEXEC)
             if self.command_format == 'bash':
@@ -478,6 +489,21 @@ def main():
         help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
         default='-itP -e LANG=C.UTF-8',
     )
+    parser.add_argument(
+        '--remove-after-success', dest='remove_after_success',
+        action='store_true', default=False,
+        help='Remove after_success section of Travis',
+    )
+    parser.add_argument(
+        '--include-cleanup', dest='include_cleanup',
+        action='store_true', default=False,
+        help='Remove the docker container/image when done testing',
+    )
+    parser.add_argument(
+        '--no-cache', dest='no_cache',
+        action='store_true', default=False,
+        help='Add the `--no-cache` flag to Docker build cmd',
+    )
     args = parser.parse_args()
     sha = args.git_revision
     git_repo = args.git_repo_url
@@ -487,6 +513,9 @@ def main():
     remotes = args.remotes and args.remotes.split(',')
     include_after_success = args.include_after_success
     run_extra_args = args.run_extra_args
+    remove_after_success = args.remove_after_success
+    include_cleanup = args.include_cleanup
+    no_cache = args.no_cache
     travis_obj = travis(
         git_repo,
         sha,
@@ -496,6 +525,9 @@ def main():
         remotes=remotes,
         include_after_success=include_after_success,
         run_extra_args=run_extra_args,
+        remove_after_success=remove_after_success,
+        include_cleanup=include_cleanup,
+        no_cache=no_cache,
     )
     return travis_obj.get_travis2docker()
 
