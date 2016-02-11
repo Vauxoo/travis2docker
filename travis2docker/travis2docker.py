@@ -75,7 +75,8 @@ class travis(object):
                  command_format='docker', docker_user=None,
                  root_path=None, default_docker_image=None,
                  remotes=None, include_after_success=None,
-                 run_extra_args=None,):
+                 run_extra_args=None, include_cleanup=None,
+                 build_extra_args=''):
         """
         Method Constructor
         @fname_dockerfile: str name of file dockerfile to save.
@@ -101,6 +102,8 @@ class travis(object):
         self.sha = self.git_obj.get_sha(revision)
         self.include_after_success = include_after_success
         self.run_extra_args = run_extra_args
+        self.include_cleanup = include_cleanup
+        self.build_extra_args = build_extra_args
         if not self.travis_data:
             raise Exception(
                 "Make sure you have access to repository"
@@ -396,7 +399,8 @@ class travis(object):
             if fname_build:
                 with open(fname_build, "w") as fbuild:
                     fbuild.write(
-                        "#!/bin/bash\ndocker build $1 -t %s %s\n" % (
+                        "#!/bin/bash\ndocker build $1 -t %s %s %s\n" % (
+                            self.build_extra_args,
                             image_name,
                             os.path.dirname(fname)
                         )
@@ -412,6 +416,10 @@ class travis(object):
                             image_name,
                         )
                     )
+                    if self.include_cleanup:
+                        fbuild.write(
+                            "docker rmi -f '%s'\n" % image_name
+                        )
                 st = os.stat(fname_run)
                 os.chmod(fname_run, st.st_mode | stat.S_IEXEC)
             if self.command_format == 'bash':
@@ -478,6 +486,16 @@ def main():
         help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
         default='-itP -e LANG=C.UTF-8',
     )
+    parser.add_argument(
+        '--include-cleanup', dest='include_cleanup',
+        action='store_true', default=False,
+        help='Remove the docker container/image when done testing',
+    )
+    parser.add_argument(
+        '--build-extra-args', dest='build_extra_args',
+        help="Extra arguments to `docker build BUILD_EXTRA_ARGS` command",
+        default='',
+    )
     args = parser.parse_args()
     sha = args.git_revision
     git_repo = args.git_repo_url
@@ -487,6 +505,8 @@ def main():
     remotes = args.remotes and args.remotes.split(',')
     include_after_success = args.include_after_success
     run_extra_args = args.run_extra_args
+    build_extra_args = args.build_extra_args
+    include_cleanup = args.include_cleanup
     travis_obj = travis(
         git_repo,
         sha,
@@ -496,6 +516,8 @@ def main():
         remotes=remotes,
         include_after_success=include_after_success,
         run_extra_args=run_extra_args,
+        include_cleanup=include_cleanup,
+        build_extra_args=build_extra_args,
     )
     return travis_obj.get_travis2docker()
 
