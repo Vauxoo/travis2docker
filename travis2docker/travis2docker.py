@@ -401,7 +401,7 @@ class travis(object):
             if fname_build:
                 with open(fname_build, "w") as fbuild:
                     fbuild.write(
-                        "#!/bin/bash\ndocker build $1 -t %s %s %s\n" % (
+                        "#!/bin/bash\ndocker build $1 %s -t %s %s\n" % (
                             self.build_extra_args,
                             image_name,
                             os.path.dirname(fname)
