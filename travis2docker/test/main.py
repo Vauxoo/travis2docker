@@ -43,3 +43,12 @@ class MainTest(unittest.TestCase):
             default_docker_image='t2d_test',
             remotes=['moylop260', 'vauxoo-dev'])
         travis_obj.get_travis2docker()
+
+    def test_t2d_build_extra_args(self):
+        ''' Verify no error is thrown when extra-build-args are supplied '''
+        sys.argv = [
+            'travis2docker', self.repo_test, self.branch_test,
+            '--root-path=/tmp/t2d_tests',
+            '--build-extra-args="--disable-content-trust=true"',
+        ]
+        t2d_main()
