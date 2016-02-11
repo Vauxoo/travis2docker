@@ -74,7 +74,7 @@ class travis(object):
     def __init__(self, git_project, revision,
                  command_format='docker', docker_user=None,
                  root_path=None, default_docker_image=None,
-                 remotes=None, include_after_success=None,
+                 remotes=None, exclude_after_success=None,
                  run_extra_args=None, include_cleanup=None,
                  build_extra_args=''):
         """
@@ -100,7 +100,7 @@ class travis(object):
         self.git_obj = GitRun(git_project, git_path)
         self.travis_data = self.load_travis_file(revision)
         self.sha = self.git_obj.get_sha(revision)
-        self.include_after_success = include_after_success
+        self.exclude_after_success = exclude_after_success
         self.run_extra_args = run_extra_args
         self.include_cleanup = include_cleanup
         self.build_extra_args = build_extra_args
@@ -347,6 +347,8 @@ class travis(object):
     def get_travis2docker_iter(self):
         travis2docker_cmd_static_str = ""
         travis2docker_cmd_iter_list = []
+        if self.exclude_after_success:
+            self.travis2docker_section.remove(('after_success', 'script'))
         for travis_section, dummy in self.travis2docker_section:
             travis2docker_section = self.get_travis_section(travis_section)
             if isinstance(travis2docker_section, types.GeneratorType):
@@ -477,9 +479,9 @@ def main():
              "\nUse remote name. E.g. 'Vauxoo,moylop260'",
     )
     parser.add_argument(
-        '--include-after-success', dest='include_after_success',
+        '--exclude-after-success', dest='exclude_after_success',
         action='store_true', default=False,
-        help='Include `travis_after_success` section to entrypoint',
+        help='Exclude `travis_after_success` section to entrypoint',
     )
     parser.add_argument(
         '--run-extra-args', dest='run_extra_args',
@@ -503,7 +505,7 @@ def main():
     root_path = args.root_path
     default_docker_image = args.default_docker_image
     remotes = args.remotes and args.remotes.split(',')
-    include_after_success = args.include_after_success
+    exclude_after_success = args.exclude_after_success
     run_extra_args = args.run_extra_args
     build_extra_args = args.build_extra_args
     include_cleanup = args.include_cleanup
@@ -514,7 +516,7 @@ def main():
         default_docker_image=default_docker_image,
         root_path=root_path,
         remotes=remotes,
-        include_after_success=include_after_success,
+        exclude_after_success=exclude_after_success,
         run_extra_args=run_extra_args,
         include_cleanup=include_cleanup,
         build_extra_args=build_extra_args,
