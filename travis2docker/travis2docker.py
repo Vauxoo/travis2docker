@@ -128,7 +128,7 @@ class travis(object):
         self.extra_env_from_run = ""
         self.command_format = command_format
         self.docker_user = docker_user or 'root'
-        self.remotes = remotes
+        self.remotes = remotes or []
 
     # def get_travis_type(self, repo_git):
     #     self.repo_git_type = None
@@ -288,13 +288,12 @@ class travis(object):
                     self.revision, self.revision)
 
             # TODO: Use sha
-            remote_default = self.git_obj.owner.lower()
             cmd_git_clone = [
                 "git init ${TRAVIS_BUILD_DIR}",
                 "cd ${TRAVIS_BUILD_DIR}",
-                "git remote add %s %s" % (remote_default, project),
+                "git remote add origin %s" % project,
                 "git fetch --update-head-ok -p %s %s" % (
-                    remote_default, cmd_refs),
+                    'origin', cmd_refs),
                 "git checkout -qf " + self.revision,
             ]
             git_user_email = self.git_obj.get_config_data("user.email")
@@ -315,14 +314,15 @@ class travis(object):
                 cmd_git_clone.append(
                     "git config --unset --global user.name"
                 )
-            if self.remotes:
-                for remote in self.remotes:
-                    remote = remote.lower()
-                    if remote != remote_default:
-                        git_remote_url = self.git_obj.host + remote + '/' + \
-                            self.git_obj.repo + '.git'
-                        cmd_git_clone.append('git remote add %s %s' % (
-                            remote, git_remote_url))
+            remote_default = self.git_obj.owner.lower()
+            remotes = set(map(str.lower, self.remotes) + [remote_default]) - \
+                set(['origin'])
+            for remote in remotes:
+                remote = remote.lower()
+                git_remote_url = self.git_obj.host + remote + '/' + \
+                    self.git_obj.repo + '.git'
+                cmd_git_clone.append('git remote add %s %s' % (
+                    remote, git_remote_url))
             if self.docker_user == 'root':
                 sudo_prefix = ''
             else:
