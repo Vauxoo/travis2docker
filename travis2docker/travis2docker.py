@@ -116,7 +116,7 @@ class travis(object):
             ('env', 'env'),
             ('install', 'run'),
             ('script', 'script'),
-            ('after_success', 'script'),
+            ('after_success', 'after_success'),
         ]
         self.travis2docker_section_dict = dict(self.travis2docker_section)
         self.scripts_root_path = self.get_script_path(self.root_path)
@@ -186,7 +186,10 @@ class travis(object):
     def scape_bash_command(self, command):
         return command.replace('$', '\\$').replace('_', '\\_')
 
-    def get_travis2docker_script(self, section_data):
+    def get_travis2docker_after_success(self, section_data):
+        return self.get_travis2docker_script(section_data, add_exit=False)
+
+    def get_travis2docker_script(self, section_data, add_exit=True):
         cmd_str = self.get_travis2docker_run(
             section_data, custom_command_format='bash',
             add_extra_env=False)
@@ -195,9 +198,13 @@ class travis(object):
         else:
             sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
-            exit_cmd = "\nif [ $? -ne 0 ]; then exit 1; fi\n"
+            exit_cmd = "\n"
+            if add_exit:
+                exit_cmd = "\nif [ $? -ne 0 ]; then exit 1; fi\n"
             cmd_str = exit_cmd.join(
                 cmd_str.strip('\n').split('\n')) + exit_cmd
+            if not add_exit:
+                cmd_str = cmd_str + '\nexit 0'
             cmd_str = "#!/bin/bash" + "\n" + self.extra_env_from_run.replace(
                 '\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', '\\\\n').strip()
