@@ -195,6 +195,9 @@ class travis(object):
         else:
             sudo_prefix = 'sudo'
         if self.command_format == 'docker' and cmd_str:
+            exit_cmd = "\nif [ $? -ne 0 ]; then exit 1; fi\n"
+            cmd_str = exit_cmd.join(
+                cmd_str.strip('\n').split('\n')) + exit_cmd
             cmd_str = "#!/bin/bash" + "\n" + self.extra_env_from_run.replace(
                 '\n', '\nexport ') + \
                 '\n' + cmd_str.replace('\n', '\\\\n').strip()
