@@ -262,9 +262,8 @@ class travis(object):
         )
         if self.command_format == 'bash':
             cmd = "\nsudo su - " + self.docker_user + \
-                  "\nsudo chown -R %s:%s %s" % (
-                      self.docker_user, self.docker_user,
-                      home_user_path) + \
+                  "\nfind {1} ! -group {0} -exec chown {0}:{0} {{}} \\;".format(  # noqa
+                        self.docker_user, home_user_path) + \
                   "\nexport TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\ngit clone --single-branch %s -b %s " % (
                       project, branch) + \
@@ -337,9 +336,8 @@ class travis(object):
                   os.path.join(home_user_path, '.ssh') + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\nWORKDIR ${TRAVIS_BUILD_DIR}" + \
-                  "\nRUN %s chown -R %s:%s %s" % (
-                      sudo_prefix, self.docker_user,
-                      self.docker_user, home_user_path) + \
+                  "\nRUN find {1} ! -group {0} -exec {2} chown {0}:{0} {{}} \;".format(  # noqa
+                        self.docker_user, home_user_path, sudo_prefix) + \
                   "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
                   "\n"
         return cmd
