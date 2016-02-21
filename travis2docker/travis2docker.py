@@ -494,7 +494,7 @@ def main():
     parser.add_argument(
         '--build-extra-args', dest='build_extra_args',
         help="Extra arguments to `docker build BUILD_EXTRA_ARGS` command",
-        default='',
+        default='--rm',
     )
     args = parser.parse_args()
     sha = args.git_revision
