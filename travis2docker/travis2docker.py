@@ -120,6 +120,7 @@ class travis(object):
         ]
         self.travis2docker_section_dict = dict(self.travis2docker_section)
         self.scripts_root_path = self.get_script_path(self.root_path)
+        self.env_regex_str2 = r"\s(?=\w+=)"
         env_regex_str = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + \
             r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
         export_regex_str = r"^(?P<export>export|EXPORT)( )+" + env_regex_str
@@ -238,14 +239,15 @@ class travis(object):
             if not isinstance(line, str):
                 continue
             docker_env = ""
-            for var, value in self.env_regex.findall(line):
+            # for var, value in self.env_regex.findall(line):
+            for var_value in re.split(self.env_regex_str2, line):
+                var, value = var_value.split('=', 1)
                 if self.command_format == 'bash':
                     docker_env += "\nexport %s=%s" % (var, value)
                 elif self.command_format == 'docker':
-                    if var:
-                        # To support case `export VAR="param1=value1"`
-                        docker_env += '\nENV '
-                    docker_env += "%s=%s" % (var, value)
+                    docker_env += "%s=%s " % (var, value)
+            if self.command_format == 'docker' and docker_env:
+                docker_env = 'ENV ' + docker_env
             yield docker_env
 
     def get_travis2docker_python(self, section_data):
