@@ -217,7 +217,7 @@ class travis(object):
             # The section 'global' is used as a item
             # Then the global_data_cmd even is a list of a item
             global_data = section_data.pop('global')
-            global_data_cmd = [''.join([
+            global_data_cmd = ["ENV " + ''.join([
                 global_env
                 for global_env
                 in self.get_travis2docker_env(global_data)
@@ -225,7 +225,7 @@ class travis(object):
         if 'matrix' in section_data:
             matrix_data = section_data.pop('matrix')
             matrix_data_cmd = [
-                matrix_env
+                "ENV " + matrix_env
                 for matrix_env
                 in self.get_travis2docker_env(matrix_data)
             ]
@@ -238,8 +238,8 @@ class travis(object):
                 continue
             if not isinstance(line, str):
                 continue
-            docker_env = ""
             # for var, value in self.env_regex.findall(line):
+            docker_env = ""
             for var_value in re.split(self.env_regex_str2, line):
                 var, value = var_value.split('=', 1)
                 if self.command_format == 'bash':
@@ -247,7 +247,7 @@ class travis(object):
                 elif self.command_format == 'docker':
                     docker_env += "%s=%s " % (var, value)
             if self.command_format == 'docker' and docker_env:
-                docker_env = 'ENV ' + docker_env
+                docker_env += docker_env
             yield docker_env
 
     def get_travis2docker_python(self, section_data):
