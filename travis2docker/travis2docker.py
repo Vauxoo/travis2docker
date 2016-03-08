@@ -341,6 +341,7 @@ class travis(object):
                   "\nRUN find {1} ! -group {0} -exec {2} chown {0}:{0} {{}} \;".format(  # noqa
                         self.docker_user, home_user_path, sudo_prefix) + \
                   "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
+                  "\nRUN ln -sf ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys" \
                   "\n"
         return cmd
 
