@@ -338,10 +338,12 @@ class travis(object):
                   os.path.join(home_user_path, '.ssh') + \
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\nWORKDIR ${TRAVIS_BUILD_DIR}" + \
-                  "\nRUN find {1} ! -group {0} -exec {2} chown {0}:{0} {{}} \;".format(  # noqa
-                        self.docker_user, home_user_path, sudo_prefix) + \
+                  "\nRUN find {1} ! -group {0} -exec {2} chown " \
+                       "{0}:{0} {{}} \\;".format(  # noqa
+                           self.docker_user, home_user_path, sudo_prefix) + \
                   "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
-                  "\nRUN cat ~/.ssh/id_rsa.pub | tee -a ~/.ssh/authorized_keys" \
+                  "\nRUN cat ~/.ssh/id_rsa.pub | " \
+                        "tee -a ~/.ssh/authorized_keys" \
                   "\n"
         return cmd
 
