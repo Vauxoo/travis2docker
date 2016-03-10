@@ -264,13 +264,13 @@ class travis(object):
         )
         if self.command_format == 'bash':
             cmd = "\nsudo su - " + self.docker_user + \
-                  "\nfind {1} ! -group {0} -exec chown {0}:{0} {{}} \\;".format(  # noqa
-                        self.docker_user, home_user_path) + \
-                  "\nexport TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
-                  "\ngit clone --single-branch %s -b %s " % (
-                      project, branch) + \
-                  "${TRAVIS_BUILD_DIR}" + \
-                  "\n"
+                  "\nfind {1} ! -group {0} -exec chown {0}:{0} {{}} \\;" \
+                .format(self.docker_user, home_user_path) + \
+                "\nexport TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
+                "\ngit clone --single-branch %s -b %s " % (
+                    project, branch) + \
+                "${TRAVIS_BUILD_DIR}" + \
+                "\n"
         elif self.command_format == 'docker':
             dkr_files_path = os.path.join(dockerfile_path, "files")
             if not os.path.exists(dkr_files_path):
@@ -339,12 +339,12 @@ class travis(object):
                   "\nENV TRAVIS_BUILD_DIR=%s" % (travis_build_dir) + \
                   "\nWORKDIR ${TRAVIS_BUILD_DIR}" + \
                   "\nRUN find {1} ! -group {0} -exec {2} chown " \
-                       "{0}:{0} {{}} \\;".format(  # noqa
-                           self.docker_user, home_user_path, sudo_prefix) + \
-                  "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
-                  "\nRUN cat ~/.ssh/id_rsa.pub | " \
-                        "tee -a ~/.ssh/authorized_keys" \
-                  "\n"
+                "{0}:{0} {{}} \\;".format(
+                self.docker_user, home_user_path, sudo_prefix) + \
+                "\nRUN " + ' \\\n    && '.join(cmd_git_clone) + \
+                "\nRUN cat ~/.ssh/id_rsa.pub | " \
+                "tee -a ~/.ssh/authorized_keys" \
+                "\n"
         return cmd
 
     def get_travis2docker_iter(self):
