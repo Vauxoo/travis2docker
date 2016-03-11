@@ -165,6 +165,8 @@ class travis(object):
     def get_travis2docker_run(self, section_data,
                               custom_command_format=None,
                               add_extra_env=True):
+        if section_data is None:
+            section_data = []
         if custom_command_format is None:
             custom_command_format = self.command_format
         docker_run = ''
