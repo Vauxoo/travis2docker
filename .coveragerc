@@ -1,17 +1,16 @@
-# Config file .coveragerc
+[paths]
+source =
+   src/travis2docker
+   */site-packages/travis2docker
+
+[run]
+branch = True
+source =
+    travis2docker
+    tests
+parallel = true
 
 [report]
-include =
-    travis2docker/*
-
-omit =
-    *__init__.py
-
-# Regexes for lines to exclude from consideration
-exclude_lines =
-    # Have to re-enable the standard pragma
-    pragma: no cover
-    # Don't complain about null context checking
-    if context is None:
-    # Don't complain about self-execute
-    if __name__ == '__main__':
+show_missing = true
+precision = 2
+omit = *migrations*

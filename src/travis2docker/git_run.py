@@ -39,8 +39,10 @@ def decode_utf(field):
 
 class GitRun(object):
 
-    def __init__(self, repo_git, path):
+    def __init__(self, repo_git, path, path_prefix_repo=False):
         self.repo_git = repo_git
+        if path_prefix_repo:
+            path = os.path.join(path, self.url2dirname(repo_git))
         self.path = path
         self.repo_git_regex = r"(?P<host>(git@|https://)([\w\.@]+)(/|:))" + \
             r"(?P<owner>[~\w,\-,\_]+)/" + \
@@ -57,6 +59,11 @@ class GitRun(object):
         else:
             self.host, self.owner, self.repo = False, False, False
 
+    def url2dirname(self, url):
+        for invalid_char in '@:/#':
+            url = url.replace(invalid_char, '_')
+        return url
+
     def checkout_bare(self, branch):
         return self.run(['symbolic-ref', 'HEAD', branch])
 
@@ -65,7 +72,7 @@ class GitRun(object):
             field = "-l"
         res = self.run(["config", field])
         if res:
-            res = res.strip("\n").strip()
+            res = res.strip("\n ")
         return res
 
     def run(self, cmd):
@@ -128,3 +135,12 @@ class GitRun(object):
         return result.strip(' \n') \
             if isinstance(result, basestring) \
             else result
+
+
+# TODO: migrate to tests
+# if __name__ == '__main__':
+#     git_obj = GitRun('git@github.com:Vauxoo/addons-vauxoo.git', '/tmp/borrar')
+#     git_obj.update()
+#     git_obj.show_file('.travis.yml', '8.0')
+#     sha = git_obj.get_sha('pull/1027')
+#     content = git_obj.show_file('.travis.yml', sha)
