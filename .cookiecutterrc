@@ -23,7 +23,7 @@ default_context:
     codacy:                    'no'
     codeclimate:               'no'
     codecov:                   'yes'
-    command_line_interface:    'click'
+    command_line_interface:    'argparse'
     command_line_interface_bin_name: 'travisfile2dockerfile'
     coveralls:                 'no'
     distribution_name:         'travis2docker'

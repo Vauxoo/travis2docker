@@ -11,10 +11,10 @@ ENV TRAVIS_BUILD_DIR=${HOME}/${TRAVIS_REPO_SLUG}
 RUN git init ${TRAVIS_BUILD_DIR} \
     && cd ${TRAVIS_BUILD_DIR} \
     && git remote add origin git@github.com:${TRAVIS_REPO_SLUG}.git \
-    # && git fetch --update-head-ok -p origin \
-# {% if 'pull' in revision %}+refs/{{ revision }}/head:refs/{{ revision }}
-# {% else %}'+refs/heads/{{ revision }}:refs/heads/{{ revision }}
-# {% endif %}
+    && git fetch --update-head-ok -p origin \
+{% if 'pull' in revision %}+refs/{{ revision }}/head:refs/{{ revision }}
+{% else %}'+refs/heads/{{ revision }}:refs/heads/{{ revision }}
+{% endif %}
     && git config --global user.email "{{ git_email }}" \
     && git config --global user.name "{{ git_user }}" \
 {% if remotes %}
