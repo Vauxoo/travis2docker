@@ -22,6 +22,7 @@ from os.path import isfile
 from os.path import join
 from tempfile import gettempdir
 
+from . import __version__
 from .exceptions import InvalidRepoBranchError
 from .git_run import GitRun
 from .travis2docker import Travis2Docker
@@ -138,6 +139,9 @@ def main():
         '--no-clone', dest='no_clone', action='store_true',
         help="Avoid clone the repository. It will require travis-yml-path",
         default=False,
+    )
+    parser.add_argument(
+        '-v', '--version', action='version', version='%(prog)s ' + __version__
     )
 
     args = parser.parse_args()
