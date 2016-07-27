@@ -159,6 +159,7 @@ def main():
             'repo_owner': 'local_file',
             'repo_project': 'local_file',
             'revision': 'local_file',
+            'sha': 'local_file',
         }
     else:
         os_kwargs = get_git_data(git_repo, join(root_path, 'repo'), revision)
@@ -182,7 +183,8 @@ def main():
     })
     t2d = Travis2Docker(
         yml_buffer=yml_content,
-        work_path=join(root_path, 'script'),
+        work_path=join(root_path, 'script',
+                       GitRun.url2dirname(git_repo), revision),
         image=default_docker_image,
         os_kwargs=os_kwargs,
         copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")],

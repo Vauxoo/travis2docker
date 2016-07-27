@@ -35,7 +35,8 @@ class GitRun(object):
         else:
             self.host, self.owner, self.repo = False, False, False
 
-    def url2dirname(self, url):
+    @staticmethod
+    def url2dirname(url):
         for invalid_char in '@:/#':
             url = url.replace(invalid_char, '_')
         return url
