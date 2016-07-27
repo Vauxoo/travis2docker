@@ -27,9 +27,9 @@ Overview
     :alt: AppVeyor Build Status
     :target: https://ci.appveyor.com/project/vauxoo/travis2docker
 
-.. |codecov| image:: https://codecov.io/github/vauxoo/travis2docker/coverage.svg?branch=master
+.. |codecov| image:: https://codecov.io/gh/Vauxoo/travis2docker/branch/master/graph/badge.svg
     :alt: Coverage Status
-    :target: https://codecov.io/github/vauxoo/travis2docker
+    :target: https://codecov.io/gh/Vauxoo/travis2docker
 
 .. |version| image:: https://img.shields.io/pypi/v/travis2docker.svg?style=flat
     :alt: PyPI Package latest release
