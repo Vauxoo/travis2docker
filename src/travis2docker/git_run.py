@@ -1,29 +1,5 @@
-#!/usr/bin/python
-# -*- encoding: utf-8 -*-
-###########################################################################
-#    Module Writen to OpenERP, Open Source Management Solution
-#
-#    Copyright (c) 2013 Vauxoo - http://www.vauxoo.com/
-#    All Rights Reserved.
-#    info Vauxoo (info@vauxoo.com)
-############################################################################
-#    Coded by: moylop260 (moylop260@vauxoo.com)
-############################################################################
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
+
+from __future__ import print_function
 
 import os
 import re
@@ -39,8 +15,10 @@ def decode_utf(field):
 
 class GitRun(object):
 
-    def __init__(self, repo_git, path):
+    def __init__(self, repo_git, path, path_prefix_repo=False):
         self.repo_git = repo_git
+        if path_prefix_repo:
+            path = os.path.join(path, self.url2dirname(repo_git))
         self.path = path
         self.repo_git_regex = r"(?P<host>(git@|https://)([\w\.@]+)(/|:))" + \
             r"(?P<owner>[~\w,\-,\_]+)/" + \
@@ -57,6 +35,12 @@ class GitRun(object):
         else:
             self.host, self.owner, self.repo = False, False, False
 
+    @staticmethod
+    def url2dirname(url):
+        for invalid_char in '@:/#':
+            url = url.replace(invalid_char, '_')
+        return url
+
     def checkout_bare(self, branch):
         return self.run(['symbolic-ref', 'HEAD', branch])
 
@@ -65,14 +49,14 @@ class GitRun(object):
             field = "-l"
         res = self.run(["config", field])
         if res:
-            res = res.strip("\n").strip()
+            res = res.strip("\n ")
         return res
 
     def run(self, cmd):
         """Execute git command in bash"""
         cmd = ['git', '--git-dir=%s' % self.path] + cmd
-        print "cmd list", cmd
-        print "cmd", ' '.join(cmd)
+        print("cmd list", cmd)
+        print("cmd", ' '.join(cmd))
         res = None
         try:
             res = subprocess.check_output(cmd)
@@ -125,6 +109,15 @@ class GitRun(object):
 
     def get_sha(self, revision):
         result = self.run(["rev-parse", revision])
-        return result.strip(' \n') \
-            if isinstance(result, basestring) \
-            else result
+        return result \
+            if isinstance(result, list) \
+            else result.strip(' \n')
+
+
+# TODO: migrate to tests
+# if __name__ == '__main__':
+#     git_obj = GitRun('git@github.com:Vauxoo/addons-vauxoo.git', '/tmp/borrar')
+#     git_obj.update()
+#     git_obj.show_file('.travis.yml', '8.0')
+#     sha = git_obj.get_sha('pull/1027')
+#     content = git_obj.show_file('.travis.yml', sha)
