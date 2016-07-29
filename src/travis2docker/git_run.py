@@ -20,10 +20,11 @@ class GitRun(object):
         if path_prefix_repo:
             path = os.path.join(path, self.url2dirname(repo_git))
         self.path = path
-        self.repo_git_regex = r"(?P<host>(git@|https://)([\w\.@]+)(/|:))" + \
-            r"(?P<owner>[~\w,\-,\_]+)/" + \
-            r"(?P<repo>[\w,\-,\_]+)(.git){0,1}((/){0,1})"
-        match_object = re.search(self.repo_git_regex, repo_git)
+        repo_git_sub = repo_git.replace(':', '/')
+        repo_git_sub = re.sub('.+@', '', repo_git_sub)
+        repo_git_sub = re.sub('.git$', '', repo_git_sub)
+        match_object = re.search(
+            r'(?P<host>[^/]+)/(?P<owner>[^/]+)/(?P<repo>[^/]+)', repo_git_sub)
         if match_object:
             self.host = match_object.group("host")
             self.owner = match_object.group("owner")
