@@ -5,6 +5,7 @@ cache:
 environment:
   global:
     WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
+    nodejs_version: "0.10"
   matrix:
     - TOXENV: 'py27,codecov'
       TOXPYTHON: C:\Python27\python.exe
@@ -47,12 +48,15 @@ environment:
 init:
   - ps: echo $env:TOXENV
   - ps: ls C:\Python*
+  - ps: Install-Product node $env:nodejs_version
 install:
   - python -u ci\appveyor-bootstrap.py
   - '%PYTHON_HOME%\Scripts\virtualenv --version'
   - '%PYTHON_HOME%\Scripts\easy_install --version'
   - '%PYTHON_HOME%\Scripts\pip --version'
   - '%PYTHON_HOME%\Scripts\tox --version'
+  - npm install
+  - npm --version
 test_script:
   - '%WITH_COMPILER% %PYTHON_HOME%\Scripts\tox'
 
