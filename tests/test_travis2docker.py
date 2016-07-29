@@ -1,8 +1,19 @@
 
 import os
+import subprocess
 import sys
 
 from travis2docker.cli import main
+
+
+def check_failed_dockerfile(scripts):
+    for script in scripts:
+        fname_dkr = os.path.join(script, 'Dockerfile')
+        pipe = subprocess.Popen(["dockerfile_lint", "-f", fname_dkr],
+                                stderr=subprocess.STDOUT,
+                                stdout=subprocess.PIPE)
+        output = pipe.stdout.read().decode('utf-8')
+        assert 'Check passed' in output
 
 
 def test_main():
@@ -15,11 +26,13 @@ def test_main():
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
+    check_failed_dockerfile(scripts)
 
     example = os.path.join(dirname_example, 'example_2.yml')
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
+    check_failed_dockerfile(scripts)
     with open(os.path.join(scripts[0], 'Dockerfile')) as f_dkr:
         dkr_content = f_dkr.read()
         assert 'ENV VARIABLE="value"' in dkr_content
@@ -28,6 +41,7 @@ def test_main():
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 2, 'Scripts returned should be 2 for %s' % example
+    check_failed_dockerfile(scripts)
     with open(os.path.join(scripts[0], 'Dockerfile')) as f_dkr:
         dkr_content = f_dkr.read()
         assert 'VARIABLE_GLOBAL="value global"' in dkr_content
@@ -37,9 +51,21 @@ def test_main():
         assert 'VARIABLE_GLOBAL="value global"' in dkr_content
         assert 'VARIABLE_MATRIX_2="value matrix 2"' in dkr_content
 
-    sys.argv = ['travis2docker', 'https://github.com/Vauxoo/travis2docker.git', 'master']
+    url = 'https://github.com/Vauxoo/travis2docker.git'
+    sys.argv = ['travis2docker', url, 'master']
     scripts = main()
+    check_failed_dockerfile(scripts)
     for script in scripts:
-        with open(os.path.join(script, 'Dockerfile')) as f_dkr:
+        fname_dkr = os.path.join(script, 'Dockerfile')
+        with open(fname_dkr) as f_dkr:
+            dkr_content = f_dkr.read()
+            assert 'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker' in dkr_content
+
+    sys.argv = ['travis2docker', url, 'pull/54']
+    scripts = main()
+    check_failed_dockerfile(scripts)
+    for script in scripts:
+        fname_dkr = os.path.join(script, 'Dockerfile')
+        with open(fname_dkr) as f_dkr:
             dkr_content = f_dkr.read()
             assert 'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker' in dkr_content
