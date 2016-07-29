@@ -55,7 +55,6 @@ install:
   - '%PYTHON_HOME%\Scripts\easy_install --version'
   - '%PYTHON_HOME%\Scripts\pip --version'
   - '%PYTHON_HOME%\Scripts\tox --version'
-  - npm install
   - npm --version
 test_script:
   - '%WITH_COMPILER% %PYTHON_HOME%\Scripts\tox'

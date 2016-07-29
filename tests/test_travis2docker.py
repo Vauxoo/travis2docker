@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import os
 import subprocess
@@ -7,9 +8,19 @@ from travis2docker.cli import main
 
 
 def check_failed_dockerfile(scripts):
+    npm_bin = None
+    for path in sys.path:
+        if os.path.isfile(os.path.join(path, 'npm')):
+            npm_bin = os.path.join(path, 'npm')
+    bin_path = subprocess.check_output([npm_bin, 'bin']).strip('\n') \
+        if npm_bin else ""
+    lint_bin = os.path.join(bin_path, "dockerfile_lint")
+    if not os.path.isfile(lint_bin):
+        print("WARN: Dockerfile is not checked, the binary is not found.")
+        return
     for script in scripts:
         fname_dkr = os.path.join(script, 'Dockerfile')
-        pipe = subprocess.Popen(["dockerfile_lint", "-f", fname_dkr],
+        pipe = subprocess.Popen([lint_bin, "-f", fname_dkr],
                                 stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE)
         output = pipe.stdout.read().decode('utf-8')
