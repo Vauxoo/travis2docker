@@ -21,7 +21,7 @@ RUN git init ${TRAVIS_BUILD_DIR} \
     && git fetch --update-head-ok -p origin \
 {% if 'pull' in revision -%}
     '+refs/{{ revision }}/head:refs/{{ revision }}'
-{% else -%}
+{%- else -%}
     '+refs/heads/{{ revision }}:refs/heads/{{ revision }}'
 {%- endif %} \
     && git checkout -qf {{ revision }} \
