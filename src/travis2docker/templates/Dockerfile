@@ -1,5 +1,6 @@
 FROM {{ image  }}
 ADD {{ entrypoint_path }} /entrypoint.sh
+RUN chown -R {{ user }}:{{ user }} /entrypoint.sh
 ENV HOME=
 {%- if user == 'root' -%}
 /root
