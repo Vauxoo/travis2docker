@@ -8,6 +8,10 @@ ENV HOME=
 /home/{{ user }}
 {%- endif %}
 
+{% if image == 'quay.io/travisci/travis-python' -%}
+ENV PATH=${PATH}:/home/travis/.nvm/v0.10.36/bin:/home/travis/.nvm/v0.10.36/lib/node_modules/npm/bin
+{%- endif %}
+
 {%- for src, dest in copies %}
 ADD {{ src }} {{ dest }}
 RUN chown -R {{ user }}:{{ user }} {{dest}}
@@ -46,6 +50,10 @@ ENV {{ env }}
 WORKDIR ${TRAVIS_BUILD_DIR}
 
 {%- for run in runs %}
+{% if image == 'quay.io/travisci/travis-python' -%}
+RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ run }}"
+{%- endif %}
+{% else %}
 RUN {{ run }}
 {%- endfor %}
 ENTRYPOINT /entrypoint.sh
