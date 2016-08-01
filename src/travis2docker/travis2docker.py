@@ -174,8 +174,16 @@ class Travis2Docker(object):
         self.chmod_execution(build_path)
         self.chmod_execution(run_path)
 
+    def _transform_yml_matrix2env(self):
+        matrix = self.yml.pop('matrix', {})
+        envs = [include['env'] for include in matrix.get('include', [])
+                if include.get('env')]
+        if envs:
+            self.yml['env'] = envs
+
     def compute_dockerfile(self, skip_after_success=False):
         work_paths = []
+        self._transform_yml_matrix2env()
         for count, env in enumerate(self._compute('env') or [], 1):
             self.curr_work_path = os.path.join(self.work_path, str(count))
             curr_dockerfile = \
