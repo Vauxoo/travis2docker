@@ -120,6 +120,10 @@ Travis2docker use a default image with many packages pre-installed.
 
 Note: You can define a custom image to use with `--docker-image` parameter.
 
+By exmaple if you want use the original image of travis you can add the following parameters:
+
+`--docker-image=quay.io/travisci/travis-python --docker-user=travis`
+
 Install docker
 **************
 
