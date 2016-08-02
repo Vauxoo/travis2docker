@@ -6,26 +6,38 @@ import sys
 
 from travis2docker.cli import main
 
+try:
+    from shutil import which  # python3.x
+except ImportError:
+    from whichcraft import which
 
-def check_failed_dockerfile(scripts):
-    npm_bin = None
-    for path in sys.path:
-        if os.path.isfile(os.path.join(path, 'npm')):
-            npm_bin = os.path.join(path, 'npm')
-    bin_path = subprocess.check_output([npm_bin, 'bin']).strip('\n') \
-        if npm_bin else ""
-    lint_bin = os.path.join(bin_path, "dockerfile_lint")
-    if not os.path.isfile(lint_bin):
-        print("WARN: Dockerfile is not checked, the binary is not found.")
-        return
+
+def check_failed_dockerfile(scripts, lines_required=None):
+    npm_bin = which('npm')
+    npm_bin_path = subprocess.check_output([npm_bin, 'bin']).\
+        decode('UTF-8').strip('\n') if npm_bin else ""
+    npm_bin_path_g = subprocess.check_output([npm_bin, 'bin', '-g']).\
+        decode('UTF-8').strip('\n') if npm_bin else ""
+    lint_bin_name = 'dockerfile_lint'
+    lint_bin = which(lint_bin_name) or \
+        which(lint_bin_name, path=npm_bin_path + os.pathsep + npm_bin_path_g)
+    assert lint_bin, "'%s' not found." % lint_bin_name
     for script in scripts:
         fname_dkr = os.path.join(script, 'Dockerfile')
         pipe = subprocess.Popen([lint_bin, "-f", fname_dkr],
                                 stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE)
         output = pipe.stdout.read().decode('utf-8')
-        print("Check dockerfile output", output)
         assert 'Check passed' in output
+        print("Check dockerfile output", output)
+        if not lines_required:
+            continue
+        with open(fname_dkr) as fdkr:
+            fdkr_lines = fdkr.readlines()
+            fdkr_lines[-1] = fdkr_lines[-1].strip('\n') + '\n'
+            for line_required in lines_required:
+                assert line_required + '\n' in fdkr_lines
+            print(fdkr_lines)
 
 
 def test_main():
@@ -33,35 +45,33 @@ def test_main():
     dirname_example = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
+    lines_required = ['RUN /install', 'ENTRYPOINT /entrypoint.sh']
 
     example = os.path.join(dirname_example, 'example_1.yml')
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
-    check_failed_dockerfile(scripts)
+    check_failed_dockerfile(scripts, lines_required)
 
     example = os.path.join(dirname_example, 'example_2.yml')
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
-    check_failed_dockerfile(scripts)
-    with open(os.path.join(scripts[0], 'Dockerfile')) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert 'ENV VARIABLE="value"' in dkr_content
+    check_failed_dockerfile(scripts, lines_required + ['ENV VARIABLE="value"'])
 
     example = os.path.join(dirname_example, 'example_3.yml')
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
     assert len(scripts) == 2, 'Scripts returned should be 2 for %s' % example
-    check_failed_dockerfile(scripts)
+    check_failed_dockerfile(scripts, lines_required)
     with open(os.path.join(scripts[0], 'Dockerfile')) as f_dkr:
         dkr_content = f_dkr.read()
-        assert 'VARIABLE_GLOBAL="value global"' in dkr_content
         assert 'VARIABLE_MATRIX_1="value matrix 1"' in dkr_content
+        assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
     with open(os.path.join(scripts[1], 'Dockerfile')) as f_dkr:
         dkr_content = f_dkr.read()
-        assert 'VARIABLE_GLOBAL="value global"' in dkr_content
         assert 'VARIABLE_MATRIX_2="value matrix 2"' in dkr_content
+        assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
 
     example = os.path.join(dirname_example, 'example_4.yml')
     sys.argv = argv + ['--travis-yml-path', example]
@@ -78,18 +88,10 @@ def test_main():
     url = 'https://github.com/Vauxoo/travis2docker.git'
     sys.argv = ['travis2docker', url, 'master']
     scripts = main()
-    check_failed_dockerfile(scripts)
-    for script in scripts:
-        fname_dkr = os.path.join(script, 'Dockerfile')
-        with open(fname_dkr) as f_dkr:
-            dkr_content = f_dkr.read()
-            assert 'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker' in dkr_content
+    check_failed_dockerfile(scripts, lines_required + [
+        'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker'])
 
     sys.argv = ['travis2docker', url, 'pull/54']
     scripts = main()
-    check_failed_dockerfile(scripts)
-    for script in scripts:
-        fname_dkr = os.path.join(script, 'Dockerfile')
-        with open(fname_dkr) as f_dkr:
-            dkr_content = f_dkr.read()
-            assert 'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker' in dkr_content
+    check_failed_dockerfile(scripts, lines_required + [
+        'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker'])

@@ -52,8 +52,8 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 {%- for run in runs %}
 {% if image == 'quay.io/travisci/travis-python' -%}
 RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ run }}"
-{%- endif %}
 {% else %}
 RUN {{ run }}
+{%- endif %}
 {%- endfor %}
 ENTRYPOINT /entrypoint.sh
