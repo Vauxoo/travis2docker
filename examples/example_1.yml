@@ -6,11 +6,6 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-addons:
-  apt:
-    packages:
-      - python-lxml
-
 python:
   - "2.7"
 

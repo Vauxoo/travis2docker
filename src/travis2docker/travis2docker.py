@@ -1,5 +1,6 @@
 import collections
 import errno
+import json
 import os
 import re
 import shutil
@@ -76,6 +77,7 @@ class Travis2Docker(object):
         self.image = image
         self._sections = collections.OrderedDict()
         self._sections['env'] = 'env'
+        self._sections['addons'] = 'addons'
         self._sections['install'] = 'run'
         self._sections['script'] = 'entrypoint'
         self._sections['after_success'] = 'entrypoint'
@@ -86,6 +88,12 @@ class Travis2Docker(object):
         else:
             self.work_path = os.path.expandvars(os.path.expanduser(work_path))
         self.dockerfile = dockerfile
+
+        travis_ci_apt_src = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'travis-ci-apt-source-whitelist')
+        self.ubuntu_json = json.load(
+            open(os.path.join(travis_ci_apt_src, "ubuntu.json")))
 
     def _compute(self, section):
         section_type = self._sections.get(section)
@@ -120,6 +128,28 @@ class Travis2Docker(object):
         args = self._make_script(data, section, add_entrypoint=True,
                                  prefix='files')
         return args
+
+    def _compute_addons(self, data, section):
+        if 'apt' not in data:
+            return
+        sources = []
+        for alias in (data['apt'].get('sources') or []):
+            for ubuntu_source in self.ubuntu_json:
+                if alias == ubuntu_source['alias']:
+                    if ubuntu_source['key_url']:
+                        sources.append(
+                            'curl -sSL "' + ubuntu_source['key_url'] +
+                            '" | apt-key add -')
+                    if ubuntu_source['sourceline'].startswith('ppa:'):
+                        sources.append(
+                            'apt-add-repository -y "' +
+                            ubuntu_source['sourceline'] + '"')
+                    else:
+                        sources.append(
+                            'echo "' + ubuntu_source['sourceline'] +
+                            '" | tee -a /etc/apt/sources.list > /dev/null')
+        data['apt']['sources'] = sources
+        return data['apt']
 
     def _make_script(self, data, section, add_entrypoint=False, add_run=False,
                      prefix=""):
@@ -197,7 +227,7 @@ class Travis2Docker(object):
                 copies.append((self.copy_path(copy_path), dest))
             kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
                       'entrypoint_path': entryp_relpath, 'image': self.image,
-                      'env': env,
+                      'env': env, 'packages': [], 'sources': [],
                       }
             with open(curr_dockerfile, "w") as f_dockerfile, \
                     open(entryp_path, "w") as f_entrypoint:
@@ -209,10 +239,12 @@ class Travis2Docker(object):
                     result = self._compute(section)
                     if not result:
                         continue
-                    keys_to_extend = ['copies', 'runs', 'entrypoints'] \
+                    keys_to_extend = ['copies', 'runs', 'entrypoints',
+                                      'packages', 'sources'] \
                         if isinstance(result, dict) else []
                     for key_to_extend in keys_to_extend:
-                        kwargs[key_to_extend].extend(result[key_to_extend])
+                        if key_to_extend in result:
+                            kwargs[key_to_extend].extend(result[key_to_extend])
                 kwargs.update(self.os_kwargs)
                 dockerfile_content = \
                     self.dockerfile_template.render(kwargs).strip('\n ')

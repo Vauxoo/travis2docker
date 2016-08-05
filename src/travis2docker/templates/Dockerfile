@@ -17,6 +17,22 @@ ADD {{ src }} {{ dest }}
 RUN chown -R {{ user }}:{{ user }} {{dest}}
 {% endfor -%}
 
+{% if sources -%}
+RUN \
+{% for source in sources %}
+{{ source }} && \
+{% endfor -%}
+  echo "sources loaded"
+{%- endif %}
+
+{% if packages -%}
+RUN apt-get update && apt-get install \
+{%- for package in packages %}
+  {{ package }} \
+{% endfor -%}
+  && echo "packages installed"
+{%- endif %}
+
 USER {{ user }}
 ENV TRAVIS_REPO_SLUG={{ repo_owner }}/{{ repo_project }}
 ENV TRAVIS_BUILD_DIR=${HOME}/${TRAVIS_REPO_SLUG}
