@@ -28,7 +28,7 @@ def check_failed_dockerfile(scripts, lines_required=None):
                                 stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE)
         output = pipe.stdout.read().decode('utf-8')
-        assert 'Check passed' in output
+        assert 'Check passed' in output, fname_dkr
         print("Check dockerfile output", output)
         if not lines_required:
             continue

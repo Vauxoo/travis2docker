@@ -8,8 +8,13 @@ cache:
 
 addons:
   apt:
+    sources:
+      - pov-wkhtmltopdf
+      - chef-stable-trusty
     packages:
       - python-lxml
+      - wkhtmltopdf
+      - chefdk
 
 python:
   - "2.7"
