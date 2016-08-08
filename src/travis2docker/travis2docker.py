@@ -29,10 +29,12 @@ class Travis2Docker(object):
 
     @property
     def new_image(self):
-        image_name = self.os_kwargs['repo_owner'] + '-' + \
-            self.os_kwargs['repo_project'] + ':' + \
-            self.os_kwargs['revision'].replace('/', '_')
-        return image_name.lower()
+        image_name = "%(repo_owner)s-%(repo_project)s" % self.os_kwargs
+        revision = self.os_kwargs['revision']
+        for invalid_char in '@:/#.':
+            image_name = image_name.replace(invalid_char, '_')
+            revision = revision.replace(invalid_char, '_')
+        return ("%s:%s" % (image_name, revision)).lower()
 
     @property
     def entrypoint_template(self):
