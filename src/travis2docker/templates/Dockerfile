@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install \
 
 USER {{ user }}
 ENV TRAVIS_REPO_SLUG={{ repo_owner }}/{{ repo_project }}
-ENV TRAVIS_BUILD_DIR=${HOME}/${TRAVIS_REPO_SLUG}
+ENV TRAVIS_BUILD_DIR=${HOME}/build/${TRAVIS_REPO_SLUG}
 RUN git init ${TRAVIS_BUILD_DIR} \
     && cd ${TRAVIS_BUILD_DIR} \
     && git remote add origin git@github.com:${TRAVIS_REPO_SLUG}.git \
