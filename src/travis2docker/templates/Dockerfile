@@ -38,7 +38,7 @@ ENV TRAVIS_REPO_SLUG={{ repo_owner }}/{{ repo_project }}
 ENV TRAVIS_BUILD_DIR=${HOME}/build/${TRAVIS_REPO_SLUG}
 RUN git init ${TRAVIS_BUILD_DIR} \
     && cd ${TRAVIS_BUILD_DIR} \
-    && git remote add origin git@github.com:${TRAVIS_REPO_SLUG}.git \
+    && git remote add origin {{ project }} \
     && git fetch --update-head-ok -p origin \
 {% if 'pull' in revision -%}
     '+refs/{{ revision }}/head:refs/{{ revision }}'
