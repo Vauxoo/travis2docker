@@ -39,6 +39,7 @@ def get_git_data(project, path, revision):
         'git_email': git_obj.get_config_data("user.email"),
         'git_user': git_obj.get_config_data("user.name"),
         'revision': revision,
+        'project': project,
     }
     return data
 
@@ -162,8 +163,9 @@ def main():
         os_kwargs = {
             'repo_owner': 'local_file',
             'repo_project': 'local_file',
-            'revision': 'local_file',
+            'revision': revision,
             'sha': 'local_file',
+            'project': git_repo,
         }
     else:
         os_kwargs = get_git_data(git_repo, join(root_path, 'repo'), revision)
