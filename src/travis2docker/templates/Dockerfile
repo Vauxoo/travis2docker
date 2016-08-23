@@ -26,7 +26,7 @@ RUN \
 {%- endif %}
 
 {% if packages -%}
-RUN apt-get update && apt-get install \
+RUN apt-get update; apt-get install \
 {%- for package in packages %}
   {{ package }} \
 {% endfor -%}
