@@ -150,8 +150,9 @@ class Travis2Docker(object):
                         sources.append(
                             'echo "' + ubuntu_source['sourceline'] +
                             '" | tee -a /etc/apt/sources.list > /dev/null')
-        data['apt']['sources'] = sources
-        return data['apt']
+        new_data = data['apt'].copy()
+        new_data['sources'] = sources
+        return new_data
 
     def _make_script(self, data, section, add_entrypoint=False, add_run=False,
                      prefix=""):
