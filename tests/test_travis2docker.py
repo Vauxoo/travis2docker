@@ -68,10 +68,12 @@ def test_main():
         dkr_content = f_dkr.read()
         assert 'VARIABLE_MATRIX_1="value matrix 1"' in dkr_content
         assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
+        assert 'sources loaded' in dkr_content
     with open(os.path.join(scripts[1], 'Dockerfile')) as f_dkr:
         dkr_content = f_dkr.read()
         assert 'VARIABLE_MATRIX_2="value matrix 2"' in dkr_content
         assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
+        assert 'sources loaded' in dkr_content
 
     example = os.path.join(dirname_example, 'example_4.yml')
     sys.argv = argv + ['--travis-yml-path', example]

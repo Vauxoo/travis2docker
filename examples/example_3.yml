@@ -8,8 +8,11 @@ cache:
 
 addons:
   apt:
+    sources:
+      - pov-wkhtmltopdf
     packages:
       - python-lxml
+      - wkhtmltopdf
 
 python:
   - "2.7"
