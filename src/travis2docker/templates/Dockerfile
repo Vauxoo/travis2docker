@@ -12,25 +12,17 @@ ENV HOME=
 ENV PATH=${PATH}:/home/travis/.nvm/v0.10.36/bin:/home/travis/.nvm/v0.10.36/lib/node_modules/npm/bin
 {%- endif %}
 
-{%- for src, dest in copies %}
+{%- for src, dest in copies or [] %}
 ADD {{ src }} {{ dest }}
 RUN chown -R {{ user }}:{{ user }} {{dest}}
 {% endfor -%}
 
 {% if sources -%}
-RUN \
-{% for source in sources %}
-{{ source }} && \
-{% endfor -%}
-  echo "sources loaded"
+RUN {{ ' && '.join(sources)  }}
 {%- endif %}
 
 {% if packages -%}
-RUN apt-get update; apt-get install \
-{%- for package in packages %}
-  {{ package }} \
-{% endfor -%}
-  && echo "packages installed"
+RUN apt-get update; apt-get install {{ ' '.join(packages) }}
 {%- endif %}
 
 USER {{ user }}
@@ -48,12 +40,10 @@ RUN git init ${TRAVIS_BUILD_DIR} \
     && git checkout -qf {{ revision }} \
     && git config --global user.email "{{ git_email }}" \
     && git config --global user.name "{{ git_user }}" \
-{%- if remotes %}
-{%- for remote in remotes %}
+{%- for remote in remotes or [] %}
     && git remote add {{ remote }} git@github.com:{{ remote }}/{{ repo_project }}.git \
 {%- endfor %}
-{%- endif %}
-    && echo 1  # TODO: Migrate to '&&'.join([for])
+    && echo 1
 
 {% if add_self_rsa_pub -%}
 RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
@@ -65,11 +55,12 @@ ENV {{ env }}
 
 WORKDIR ${TRAVIS_BUILD_DIR}
 
-{%- for run in runs %}
+
+{% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}
-RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ run }}"
+RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ str.join(' && ', runs) }}"
 {% else %}
-RUN {{ run }}
+RUN {{ ' && '.join(runs) }}
 {%- endif %}
-{%- endfor %}
+{%- endif %}
 ENTRYPOINT /entrypoint.sh
