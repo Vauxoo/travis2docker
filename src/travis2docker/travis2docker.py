@@ -80,6 +80,7 @@ class Travis2Docker(object):
         self._sections = collections.OrderedDict()
         self._sections['env'] = 'env'
         self._sections['addons'] = 'addons'
+        self._sections['before_install'] = 'run'
         self._sections['install'] = 'run'
         self._sections['script'] = 'entrypoint'
         self._sections['after_success'] = 'entrypoint'
@@ -102,6 +103,8 @@ class Travis2Docker(object):
         if not section_type:
             return None
         section_data = self.yml.get(section, "")
+        if section != "env" and not section_data:
+            return None
         if not isinstance(section_data, (list, dict, tuple)):
             section_data = [section_data]
         job_method = getattr(self, '_compute_' + section_type)
@@ -159,6 +162,7 @@ class Travis2Docker(object):
         file_path = os.path.join(self.curr_work_path, prefix, section)
         self.mkdir_p(os.path.dirname(file_path))
         with open(file_path, "w") as f_section:
+            f_section.write('#!/bin/bash\n')
             for var, value in self.curr_exports:
                 f_section.write('\nexport %s=%s' % (var, value))
             for line in data:
