@@ -53,6 +53,12 @@ def test_main():
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
     check_failed_dockerfile(scripts, lines_required)
 
+    sys.argv = argv + ['--travis-yml-path', example,
+                       '--docker-image', 'quay.io/travisci/travis-python']
+    scripts = main()
+    assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
+    check_failed_dockerfile(scripts, ['FROM quay.io/travisci/travis-python'])
+
     example = os.path.join(dirname_example, 'example_2.yml')
     sys.argv = argv + ['--travis-yml-path', example]
     scripts = main()
