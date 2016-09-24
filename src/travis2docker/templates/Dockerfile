@@ -58,7 +58,7 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 
 {% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}
-RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ str.join(' && ', runs) }}"
+RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ ' && '.join(runs) }}"
 {% else %}
 RUN {{ ' && '.join(runs) }}
 {%- endif %}
