@@ -26,6 +26,10 @@ RUN apt-get update; apt-get install {{ ' '.join(packages) }}
 {%- endif %}
 
 USER {{ user }}
+
+# Install RVM
+RUN \curl -L https://get.rvm.io | bash -s stable
+
 ENV TRAVIS_REPO_SLUG={{ repo_owner }}/{{ repo_project }}
 ENV TRAVIS_BUILD_DIR=${HOME}/build/${TRAVIS_REPO_SLUG}
 RUN git init ${TRAVIS_BUILD_DIR} \
@@ -58,9 +62,9 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 
 {% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}
-RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ ' && '.join(runs) }}"
+RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && source /usr/local/rvm/scripts/rvm && {{ ' && '.join(runs) }}"
 {% else %}
-RUN {{ ' && '.join(runs) }}
+RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && {{ ' && '.join(runs) }}"
 {%- endif %}
 {%- endif %}
 ENTRYPOINT /entrypoint.sh
