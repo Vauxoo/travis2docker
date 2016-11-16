@@ -45,7 +45,11 @@ def test_main():
     dirname_example = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
-    lines_required = ['RUN /install', 'ENTRYPOINT /entrypoint.sh']
+    lines_required = [
+        'RUN \curl -L https://get.rvm.io | /bin/bash -s stable',
+        'RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && /install"',
+        'ENTRYPOINT /entrypoint.sh',
+    ]
 
     example = os.path.join(dirname_example, 'example_1.yml')
     sys.argv = argv + ['--travis-yml-path', example]
