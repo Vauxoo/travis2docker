@@ -45,7 +45,10 @@ def test_main():
     dirname_example = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
-    lines_required = ['RUN /install', 'ENTRYPOINT /entrypoint.sh']
+    lines_required = [
+        'RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && /install"',
+        'ENTRYPOINT /entrypoint.sh',
+    ]
 
     example = os.path.join(dirname_example, 'example_1.yml')
     sys.argv = argv + ['--travis-yml-path', example]
@@ -97,7 +100,10 @@ def test_main():
     sys.argv = ['travis2docker', url, 'master']
     scripts = main()
     lines_required.pop(0)
-    lines_required.append('RUN /before_install && /install')
+    lines_required.append(
+        'RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && '
+        '/before_install && /install"',
+    )
     check_failed_dockerfile(scripts, lines_required + [
         'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker'])
 

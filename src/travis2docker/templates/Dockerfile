@@ -60,7 +60,7 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 {% if image == 'quay.io/travisci/travis-python' -%}
 RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ ' && '.join(runs) }}"
 {% else %}
-RUN {{ ' && '.join(runs) }}
+RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && {{ ' && '.join(runs) }}"
 {%- endif %}
 {%- endif %}
 ENTRYPOINT /entrypoint.sh
