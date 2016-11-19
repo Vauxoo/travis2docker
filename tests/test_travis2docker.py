@@ -46,7 +46,7 @@ def test_main():
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
     lines_required = [
-        'RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && /install"',
+        'RUN /bin/bash -c "source /rvm_env.sh && /install"',
         'ENTRYPOINT /entrypoint.sh',
     ]
 
@@ -101,7 +101,7 @@ def test_main():
     scripts = main()
     lines_required.pop(0)
     lines_required.append(
-        'RUN /bin/bash -c "source /usr/local/rvm/scripts/rvm && '
+        'RUN /bin/bash -c "source /rvm_env.sh && '
         '/before_install && /install"',
     )
     check_failed_dockerfile(scripts, lines_required + [

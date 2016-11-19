@@ -230,7 +230,7 @@ class Travis2Docker(object):
             self.mkdir_p(os.path.dirname(entryp_path))
             entryp_relpath = os.path.relpath(entryp_path, self.curr_work_path)
             rvm_env_path = os.path.join(self.curr_work_path, "files",
-                                       "rvm_env.sh")
+                                        "rvm_env.sh")
             rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
             copies = []
             for copy_path, dest in self.copy_paths:
