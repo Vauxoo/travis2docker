@@ -229,12 +229,16 @@ class Travis2Docker(object):
                                        "entrypoint.sh")
             self.mkdir_p(os.path.dirname(entryp_path))
             entryp_relpath = os.path.relpath(entryp_path, self.curr_work_path)
+            rvm_env_path = os.path.join(self.curr_work_path, "files",
+                                       "rvm_env.sh")
+            rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
             copies = []
             for copy_path, dest in self.copy_paths:
                 copies.append((self.copy_path(copy_path), dest))
             kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
                       'entrypoint_path': entryp_relpath, 'image': self.image,
                       'env': env, 'packages': [], 'sources': [],
+                      'rvm_env_path': rvm_env_relpath,
                       }
             with open(curr_dockerfile, "w") as f_dockerfile, \
                     open(entryp_path, "w") as f_entrypoint:
