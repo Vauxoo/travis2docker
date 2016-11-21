@@ -1,6 +1,8 @@
 FROM {{ image  }}
 ADD {{ entrypoint_path }} /entrypoint.sh
 RUN chown -R {{ user }}:{{ user }} /entrypoint.sh
+ADD {{ rvm_env_path }} /rvm_env.sh
+RUN chown -R {{ user }}:{{ user }} /rvm_env.sh
 ENV HOME=
 {%- if user == 'root' -%}
 /root
@@ -58,9 +60,9 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 
 {% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}
-RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && {{ ' && '.join(runs) }}"
+RUN /bin/bash -c "source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate && source /rvm_env.sh && {{ ' && '.join(runs) }}"
 {% else %}
-RUN {{ ' && '.join(runs) }}
+RUN /bin/bash -c "source /rvm_env.sh && {{ ' && '.join(runs) }}"
 {%- endif %}
 {%- endif %}
 ENTRYPOINT /entrypoint.sh
