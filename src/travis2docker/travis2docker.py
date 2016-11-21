@@ -232,8 +232,6 @@ class Travis2Docker(object):
             rvm_env_path = os.path.join(self.curr_work_path, "files",
                                         "rvm_env.sh")
             rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
-            open(rvm_env_path, "w").write(
-                self.jinja_env.get_template('rvm_env.sh').render())
             copies = []
             for copy_path, dest in self.copy_paths:
                 copies.append((self.copy_path(copy_path), dest))
@@ -243,7 +241,8 @@ class Travis2Docker(object):
                       'rvm_env_path': rvm_env_relpath,
                       }
             with open(curr_dockerfile, "w") as f_dockerfile, \
-                    open(entryp_path, "w") as f_entrypoint:
+                    open(entryp_path, "w") as f_entrypoint, \
+                    open(rvm_env_path, "w") as f_rvm:
                 for section, _ in self._sections.items():
                     if section == 'env':
                         continue
@@ -271,6 +270,12 @@ class Travis2Docker(object):
                     f_entrypoint.write(entrypoint_content.encode('utf-8'))
                 except TypeError:
                     f_entrypoint.write(entrypoint_content)
+                rvm_env_content = self.jinja_env.get_template(
+                    'rvm_env.sh').render(kwargs).strip('\n ')
+                try:
+                    f_rvm.write(rvm_env_content.encode('UTF-8'))
+                except TypeError:
+                    f_rvm.write(rvm_env_content)
             self.compute_build_scripts(count)
             self.chmod_execution(entryp_path)
             work_paths.append(self.curr_work_path)
