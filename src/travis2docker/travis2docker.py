@@ -232,6 +232,8 @@ class Travis2Docker(object):
             rvm_env_path = os.path.join(self.curr_work_path, "files",
                                         "rvm_env.sh")
             rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
+            open(rvm_env_path, "w").write(
+                self.jinja_env.get_template('rvm_env.sh').render())
             copies = []
             for copy_path, dest in self.copy_paths:
                 copies.append((self.copy_path(copy_path), dest))
