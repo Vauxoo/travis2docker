@@ -297,7 +297,8 @@ class Travis2Docker(object):
         elif os.path.isfile(src):
             shutil.copy(src, dest_path)
         else:
-            raise "Just directory or file is supported to copy [%s]" % src
+            raise UserWarning(
+                "Just directory or file is supported to copy [%s]" % src)
         return os.path.relpath(dest_path, self.curr_work_path)
 
 
