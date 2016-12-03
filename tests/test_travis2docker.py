@@ -51,10 +51,15 @@ def test_main():
     ]
 
     example = os.path.join(dirname_example, 'example_1.yml')
-    sys.argv = argv + ['--travis-yml-path', example]
+    sys.argv = argv + ['--travis-yml-path', example,
+                       '--add-rcfile=%s,%s' % (example, dirname_example)]
     scripts = main()
     assert len(scripts) == 1, 'Scripts returned should be 1 for %s' % example
     check_failed_dockerfile(scripts, lines_required)
+    assert os.path.isdir(
+        os.path.join(scripts[0], os.path.basename(dirname_example)))
+    assert os.path.isfile(
+        os.path.join(scripts[0], os.path.basename(example)))
 
     sys.argv = argv + ['--travis-yml-path', example,
                        '--docker-image', 'quay.io/travisci/travis-python']

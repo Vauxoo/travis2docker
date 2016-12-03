@@ -142,6 +142,11 @@ def main():
         default=False,
     )
     parser.add_argument(
+        '--add-rcfile', dest='add_rcfile', default="",
+        help='Optional paths of configuration files to '
+        'copy for user\'s HOME path into container, separated by a comma.',
+    )
+    parser.add_argument(
         '-v', '--version', action='version', version='%(prog)s ' + __version__
     )
 
@@ -159,6 +164,10 @@ def main():
     build_extra_cmds = '\n'.join(args.build_extra_cmds)
     run_extra_cmds = '\n'.join(args.run_extra_cmds)
     no_clone = args.no_clone
+    rcfiles_args = args.add_rcfile and args.add_rcfile.split(',')
+    rcfiles = [
+        (expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file)))
+        for rc_file in rcfiles_args]
     if no_clone:
         os_kwargs = {
             'repo_owner': 'local_file',
@@ -193,7 +202,7 @@ def main():
                        GitRun.url2dirname(git_repo), revision),
         image=default_docker_image,
         os_kwargs=os_kwargs,
-        copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")],
+        copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles,
     )
     t2d.build_extra_params = {
         'extra_params': build_extra_args,

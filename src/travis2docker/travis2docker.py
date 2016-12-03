@@ -292,7 +292,13 @@ class Travis2Docker(object):
             os.path.join(self.curr_work_path, basename)))
         if os.path.isdir(dest_path):
             shutil.rmtree(dest_path)
-        shutil.copytree(src, dest_path)
+        if os.path.isdir(src):
+            shutil.copytree(src, dest_path)
+        elif os.path.isfile(src):
+            shutil.copy(src, dest_path)
+        else:
+            raise UserWarning(
+                "Just directory or file is supported to copy [%s]" % src)
         return os.path.relpath(dest_path, self.curr_work_path)
 
 
