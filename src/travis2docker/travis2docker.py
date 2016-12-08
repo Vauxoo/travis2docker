@@ -62,11 +62,14 @@ class Travis2Docker(object):
             else:
                 raise
 
-    def __init__(self, yml_buffer, image, work_path=None, dockerfile=None,
+    def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
                  ):
+        if image is None:
+            image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
             os_kwargs = {}
+        os_kwargs.setdefault('user', 'root')
         if dockerfile is None:
             dockerfile = 'Dockerfile'
         if templates_path is None:
