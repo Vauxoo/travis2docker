@@ -225,6 +225,7 @@ class Travis2Docker(object):
         work_paths = []
         self._transform_yml_matrix2env()
         for count, env in enumerate(self._compute('env') or [], 1):
+            self.reset()
             self.curr_work_path = os.path.join(self.work_path, str(count))
             curr_dockerfile = \
                 os.path.join(self.curr_work_path, self.dockerfile)
