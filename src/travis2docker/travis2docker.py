@@ -18,10 +18,6 @@ RE_EXPORT_STR = r"^(?P<export>export|EXPORT)( )+" + RE_ENV_STR
 class Travis2Docker(object):
 
     re_export = re.compile(RE_EXPORT_STR, re.M)
-    curr_work_path = None
-    curr_exports = []
-    build_extra_params = {}
-    run_extra_params = {}
 
     @property
     def dockerfile_template(self):
@@ -65,6 +61,10 @@ class Travis2Docker(object):
     def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
                  ):
+        self.curr_work_path = None
+        self.curr_exports = []
+        self.build_extra_params = {}
+        self.run_extra_params = {}
         if image is None:
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
