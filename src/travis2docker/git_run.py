@@ -113,12 +113,3 @@ class GitRun(object):
         return result \
             if isinstance(result, list) \
             else result.strip(' \n')
-
-
-# TODO: migrate to tests
-# if __name__ == '__main__':
-#     git_obj = GitRun('git@github.com:Vauxoo/addons-vauxoo.git', '/tmp/borrar')
-#     git_obj.update()
-#     git_obj.show_file('.travis.yml', '8.0')
-#     sha = git_obj.get_sha('pull/1027')
-#     content = git_obj.show_file('.travis.yml', sha)

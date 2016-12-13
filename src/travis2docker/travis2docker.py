@@ -304,28 +304,3 @@ class Travis2Docker(object):
             raise UserWarning(
                 "Just directory or file is supported to copy [%s]" % src)
         return os.path.relpath(dest_path, self.curr_work_path)
-
-
-# TODO: Migrate this code to tests
-# if __name__ == '__main__':
-#     yml_path_wrk = "/Users/moylop260/odoo/yoytec/.travis.yml"
-#     yml_path_wrk = "~/odoo/l10n-argentina"
-#     yml_path_wrk = "~/odoo/yoytec"
-#     image_wrk = 'vauxoo/odoo-80-image-shippable-auto'
-#     t2d = Travis2Docker(
-#         yml_path_wrk, image_wrk, os_kwargs={
-#             'user': 'shippable',
-#             'repo_owner': 'Vauxoo',
-#             'repo_project': 'yoytec',
-#             'add_self_rsa_pub': True,
-#             'remotes': ['Vauxoo', 'Vauxoo-dev'],
-#             'revision': 'pull/2',
-#             'git_email': 'moylop@vx.com',
-#             'git_user': 'moy6',
-#         },
-#         copy_paths=[("$HOME/.ssh", "$HOME/.ssh")]
-#     )
-#     t2d.run_extra_params = "-itd --entrypoint=bash -e TRAVIS_PULL_REQUEST=1"
-#     t2d.build_extra_params = "--rm"
-#     t2d.compute_dockerfile(skip_after_success=True)
-#     print t2d.work_path
