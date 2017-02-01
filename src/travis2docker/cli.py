@@ -196,13 +196,17 @@ def main():
         'add_self_rsa_pub': True,
         'remotes': remotes,
     })
+    copy_paths = [(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles
+    if isfile(expanduser("~/.container.profile")):
+        copy_paths.append((expanduser("~/.container.profile"),
+                           "$HOME/.container.profile"))
     t2d = Travis2Docker(
         yml_buffer=yml_content,
         work_path=join(root_path, 'script',
                        GitRun.url2dirname(git_repo), revision),
         image=default_docker_image,
         os_kwargs=os_kwargs,
-        copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles,
+        copy_paths=copy_paths,
     )
     t2d.build_extra_params = {
         'extra_params': build_extra_args,
