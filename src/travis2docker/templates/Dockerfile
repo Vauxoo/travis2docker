@@ -1,7 +1,7 @@
 FROM {{ image  }}
-ADD {{ entrypoint_path }} /entrypoint.sh
+COPY {{ entrypoint_path }} /entrypoint.sh
 RUN chown -R {{ user }}:{{ user }} /entrypoint.sh
-ADD {{ rvm_env_path }} /rvm_env.sh
+COPY {{ rvm_env_path }} /rvm_env.sh
 RUN chown -R {{ user }}:{{ user }} /rvm_env.sh
 ENV HOME=
 {%- if user == 'root' -%}
@@ -15,7 +15,7 @@ ENV PATH=${PATH}:/home/travis/.nvm/v0.10.36/bin:/home/travis/.nvm/v0.10.36/lib/n
 {%- endif %}
 
 {%- for src, dest in copies or [] %}
-ADD {{ src }} {{ dest }}
+COPY {{ src }} {{ dest }}
 RUN chown -R {{ user }}:{{ user }} {{dest}}
 {% endfor -%}
 
