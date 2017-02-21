@@ -45,8 +45,13 @@ def test_main():
     dirname_example = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
+    sources_py = ("source ${REPO_REQUIREMENTS}/virtualenv/"
+                  "python2.7/bin/activate")
+    sources_js = "source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate"
     lines_required = [
-        'RUN /bin/bash -c "source /rvm_env.sh && /install"',
+        'RUN /bin/bash -c "{source_py} && {source_js} '
+        '&& source /rvm_env.sh && /install"'.
+        format(source_py=sources_py, source_js=sources_js),
         'ENTRYPOINT /entrypoint.sh',
     ]
 
@@ -106,8 +111,10 @@ def test_main():
     scripts = main()
     lines_required.pop(0)
     lines_required.append(
-        'RUN /bin/bash -c "source /rvm_env.sh && '
-        '/before_install && /install"',
+        'RUN /bin/bash -c "{source_py} && {source_js} && '
+        'source /rvm_env.sh && '
+        '/before_install && /install"'.
+        format(source_py=sources_py, source_js=sources_js),
     )
     check_failed_dockerfile(scripts, lines_required + [
         'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker'])
