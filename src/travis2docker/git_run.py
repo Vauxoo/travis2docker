@@ -102,7 +102,11 @@ class GitRun(object):
             ])
         self.run(['gc', '--auto', '--prune=all'])
         self.run(['fetch', '-p', 'origin', '+refs/heads/*:refs/heads/*'])
-        self.run(['fetch', '-p', 'origin', '+refs/pull/*/head:refs/pull/*'])
+        # github support
+        self.run(['fetch', 'origin', '+refs/pull/*/head:refs/pull/*'])
+        # gitlab support
+        self.run([
+            'fetch', 'origin', '+refs/merge-requests/*/head:refs/pull/*'])
 
     def show_file(self, git_file, sha):
         result = self.run(["show", "%s:%s" % (sha, git_file)])
