@@ -35,7 +35,9 @@ RUN git init ${TRAVIS_BUILD_DIR} \
     && git remote add origin {{ project }} \
     && git fetch --update-head-ok -p origin \
 {% if revision.startswith('pull/') -%}
-    '+refs/{{ revision }}/head:refs/{{ revision }}'
+    '+refs/{{ revision }}/head:refs/{{ revision }}' || true && \
+    git fetch --update-head-ok -p origin \
+    '+refs/{{ revision.replace('pull/', 'merge-requests/') }}/head:refs/{{ revision }}' || true
 {%- else -%}
     '+refs/heads/{{ revision }}:refs/heads/{{ revision }}'
 {%- endif %} \
@@ -45,7 +47,7 @@ RUN git init ${TRAVIS_BUILD_DIR} \
 {%- for remote in remotes or [] %}
     && git remote add {{ remote }} git@github.com:{{ remote }}/{{ repo_project }}.git \
 {%- endfor %}
-    && echo 1
+     || true
 
 {% if add_self_rsa_pub -%}
 RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
