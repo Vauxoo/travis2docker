@@ -43,7 +43,7 @@ RUN git init ${TRAVIS_BUILD_DIR} \
     && git config --global user.email "{{ git_email }}" \
     && git config --global user.name "{{ git_user }}" \
 {%- for remote in remotes or [] %}
-    && git remote add {{ remote }} git@github.com:{{ remote }}/{{ repo_project }}.git \
+    && git remote add {{ remote }} {{git_base}}:{{ remote }}/{{ repo_project }}.git \
 {%- endfor %}
     && echo 1
 

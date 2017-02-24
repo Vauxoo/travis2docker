@@ -153,6 +153,12 @@ def main():
     args = parser.parse_args()
     revision = args.git_revision
     git_repo = args.git_repo_url
+    git_base = 'git@github.com'
+    if 'http' in git_repo or 'https' in git_repo:
+        split = git_repo.split('//')
+        git_base = split[0] + '//' + split[1].split('/')[0]
+    elif ':' in git_repo:
+        git_base = git_repo.split(':')[0]
     docker_user = args.docker_user
     root_path = args.root_path
     default_docker_image = args.default_docker_image
@@ -195,6 +201,7 @@ def main():
         'user': docker_user,
         'add_self_rsa_pub': True,
         'remotes': remotes,
+        'git_base': git_base
     })
     t2d = Travis2Docker(
         yml_buffer=yml_content,
