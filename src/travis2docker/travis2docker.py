@@ -69,7 +69,10 @@ class Travis2Docker(object):
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
             os_kwargs = {}
-        os_kwargs.setdefault('user', 'root')
+        default_user = 'root'
+        if image == 'vauxoo/odoo-80-image-shippable-auto':
+            default_user = 'odoo'
+        os_kwargs.setdefault('user', default_user)
         if dockerfile is None:
             dockerfile = 'Dockerfile'
         if templates_path is None:
