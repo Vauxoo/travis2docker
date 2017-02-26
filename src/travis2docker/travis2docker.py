@@ -72,6 +72,8 @@ class Travis2Docker(object):
         default_user = 'root'
         if image == 'vauxoo/odoo-80-image-shippable-auto':
             default_user = 'odoo'
+        elif image == 'quay.io/travisci/travis-python':
+            default_user = 'travis'
         os_kwargs.setdefault('user', default_user)
         if dockerfile is None:
             dockerfile = 'Dockerfile'
