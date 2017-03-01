@@ -26,7 +26,7 @@ project = u'travis2docker'
 year = '2016'
 author = u'Vauxoo'
 copyright = '{0}, {1}'.format(year, author)
-version = release = u'3.3.1'
+version = release = u'3.3.2'
 
 pygments_style = 'trac'
 templates_path = ['.']
