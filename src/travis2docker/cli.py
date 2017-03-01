@@ -153,6 +153,7 @@ def main():
     args = parser.parse_args()
     revision = args.git_revision
     git_repo = args.git_repo_url
+    git_base = GitRun.get_data_url(git_repo, False)[0]
     docker_user = args.docker_user
     root_path = args.root_path
     default_docker_image = args.default_docker_image
@@ -195,6 +196,7 @@ def main():
         'user': docker_user,
         'add_self_rsa_pub': True,
         'remotes': remotes,
+        'git_base': git_base
     })
     t2d = Travis2Docker(
         yml_buffer=yml_content,

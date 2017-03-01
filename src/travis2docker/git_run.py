@@ -20,21 +20,26 @@ class GitRun(object):
         if path_prefix_repo:
             path = os.path.join(path, self.url2dirname(repo_git))
         self.path = path
+        self.host, self.owner, self.repo = self.get_data_url(repo_git)
+
+    @staticmethod
+    def get_data_url(repo_git, no_user=True):
+        host, owner, repo = False, False, False
         repo_git_sub = repo_git.replace(':', '/')
-        repo_git_sub = re.sub('.+@', '', repo_git_sub)
+        if no_user:
+            repo_git_sub = re.sub('.+@', '', repo_git_sub)
         repo_git_sub = re.sub('.git$', '', repo_git_sub)
         match_object = re.search(
             r'(?P<host>[^/]+)/(?P<owner>[^/]+)/(?P<repo>[^/]+)', repo_git_sub)
         if match_object:
-            self.host = match_object.group("host")
-            self.owner = match_object.group("owner")
-            self.repo = match_object.group("repo")
+            host = match_object.group("host")
+            owner = match_object.group("owner")
+            repo = match_object.group("repo")
         elif os.path.isdir(repo_git):
-            self.host = 'local'
-            self.owner = os.path.basename(repo_git)
-            self.repo = os.path.basename(os.path.dirname(repo_git))
-        else:
-            self.host, self.owner, self.repo = False, False, False
+            host = 'local'
+            owner = os.path.basename(repo_git)
+            repo = os.path.basename(os.path.dirname(repo_git))
+        return host, owner, repo
 
     @staticmethod
     def url2dirname(url):
