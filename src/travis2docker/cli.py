@@ -78,7 +78,6 @@ def main():
         help="User of work into Dockerfile."
              "\nBased on your docker image."
              "\nDefault: root",
-        default='root'
     )
     parser.add_argument(
         '--docker-image', dest='default_docker_image',
@@ -193,11 +192,12 @@ def main():
                  "\nverify exists .travis.yml"
         raise InvalidRepoBranchError(msg)
     os_kwargs.update({
-        'user': docker_user,
         'add_self_rsa_pub': True,
         'remotes': remotes,
         'git_base': git_base
     })
+    if docker_user:
+        os_kwargs.update({'user': docker_user})
     t2d = Travis2Docker(
         yml_buffer=yml_content,
         work_path=join(root_path, 'script',
