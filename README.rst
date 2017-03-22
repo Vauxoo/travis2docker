@@ -102,7 +102,7 @@ Depends
 SSH key without password
 ************************
 
-Dockerfile don't support a prompt to entry your password, then you need remove it from your ssh keys.
+Dockerfile doesn't support a prompt to enter your password, so you need to remove it from your ssh keys.
 
 ::
 
@@ -114,7 +114,7 @@ Dockerfile don't support a prompt to entry your password, then you need remove i
 Download the big image
 **********************
 
-Travis2docker use a default image with many packages pre-installed.
+Travis2docker uses a default image with many packages pre-installed.
 
 `docker pull vauxoo/odoo-80-image-shippable-auto`
 
