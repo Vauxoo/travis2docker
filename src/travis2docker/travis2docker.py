@@ -62,7 +62,6 @@ class Travis2Docker(object):
                  templates_path=None, os_kwargs=None, copy_paths=None,
                  ):
         self._python_versions = ['2.7']
-        self._supported_versions = ('2.7' '3.2' '3.3' '3.4' '3.5' '3.6')
         self.curr_work_path = None
         self.curr_exports = []
         self.build_extra_params = {}
@@ -229,8 +228,7 @@ class Travis2Docker(object):
         if not versions:
             return False
         for version in versions:
-            if (version not in self._supported_versions or
-                    version in self._python_versions):
+            if version in self._python_versions:
                 continue
             self._python_versions.append(version)
 
