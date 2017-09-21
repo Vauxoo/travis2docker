@@ -61,7 +61,7 @@ class Travis2Docker(object):
     def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
                  ):
-        self._python_versions = ['2.7']
+        self._python_versions = []
         self.curr_work_path = None
         self.curr_exports = []
         self.build_extra_params = {}
