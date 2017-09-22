@@ -1,6 +1,7 @@
 language: python
 python: '3.5'
 sudo: false
+dist: precise
 env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
