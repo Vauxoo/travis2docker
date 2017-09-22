@@ -63,7 +63,7 @@ WORKDIR ${TRAVIS_BUILD_DIR}
 
 {% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}
-RUN /bin/bash -c "source $HOME/virtualenv/python{{ python_version }}_with_system_site_packages/bin/activate && source /rvm_env.sh && {{ ' && '.join(runs) }}"
+RUN /bin/bash -c "source $HOME/virtualenv/python{{ python_version }}/bin/activate && source /rvm_env.sh && {{ ' && '.join(runs) }}"
 {% elif  image == 'vauxoo/odoo-80-image-shippable-auto' -%}
 RUN /bin/bash -c "source ${REPO_REQUIREMENTS}/virtualenv/python{{ python_version }}/bin/activate && source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate && source /rvm_env.sh && {{ ' && '.join(runs) }}"
 {% else %}
