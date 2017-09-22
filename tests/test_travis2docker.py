@@ -109,6 +109,8 @@ def test_main():
     url = 'https://github.com/Vauxoo/travis2docker.git'
     sys.argv = ['travis2docker', url, 'master']
     scripts = main()
+    sources_py = ("source ${REPO_REQUIREMENTS}/virtualenv/"
+                  "python3.5/bin/activate")
     lines_required.pop(0)
     lines_required.append(
         'RUN /bin/bash -c "{source_py} && {source_js} && '

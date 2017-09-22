@@ -227,6 +227,8 @@ class Travis2Docker(object):
         versions = self.yml.pop('python', {})
         if not versions:
             return False
+        if not isinstance(versions, list):
+            versions = [versions]
         for version in versions:
             if version in self._python_versions:
                 continue
