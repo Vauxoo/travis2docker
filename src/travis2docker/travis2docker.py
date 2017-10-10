@@ -88,6 +88,7 @@ class Travis2Docker(object):
         self.image = image
         self._sections = collections.OrderedDict()
         self._sections['env'] = 'env'
+        self._sections['env_global'] = 'env_global'
         self._sections['addons'] = 'addons'
         self._sections['before_install'] = 'run'
         self._sections['install'] = 'run'
@@ -112,27 +113,17 @@ class Travis2Docker(object):
         if not section_type:
             return None
         section_data = self.yml.get(section, "")
-        if section != "env" and not section_data:
+        if section not in ("env", "env_global") and not section_data:
             return None
         if not isinstance(section_data, (list, dict, tuple)):
             section_data = [section_data]
         job_method = getattr(self, '_compute_' + section_type)
         return job_method(section_data, section)
 
-    @staticmethod
-    def _compute_env(data, _):
-        if isinstance(data, list):
-            # old version without matrix
-            data = {'matrix': data}
-        env_globals = ""
-        for env_global in data.get('global', []):
-            if isinstance(env_global, dict):
-                # we can't use the secure encrypted variables
-                continue
-            env_globals += " " + env_global
-        env_globals = env_globals.strip()
-        for env_matrix in data.get('matrix', []):
-            yield (env_globals + " " + env_matrix).strip()
+    def _compute_env_global(self, data, _):
+        globals = (self.yml.get('env').get('global')
+                   if isinstance(self.yml.get('env'), dict) else [])
+        return globals
 
     def _compute_run(self, data, section):
         args = self._make_script(data, section, add_run=True, prefix='files')
@@ -234,84 +225,118 @@ class Travis2Docker(object):
                 continue
             self._python_versions.append(version)
 
+    def _transform_yml_envmatrix2env(self):
+        envs = []
+        if not self.yml.get('env'):
+            return envs
+        globals = self._compute('env_global')
+        values = (self.yml.get('env').get('matrix', [])
+                  if isinstance(self.yml.get('env'), dict)
+                  else self.yml.get('env', []))
+        envs = [(" ".join(globals) + " " + env).strip() for env in values]
+        return envs
+
     def _transform_yml_matrix2env(self):
+        envs = []
+        globals = self._compute('env_global')
         matrix = self.yml.pop('matrix', {})
-        envs = [include['env'] for include in matrix.get('include', [])
-                if include.get('env')]
-        if envs:
-            self.yml['env'] = envs
+        for include in matrix.get('include', []):
+            env = {}
+            if include.get('env', False) and include.get('python', False):
+                env['env'] = (" ".join(globals) + " " +
+                              include.get('env')).strip()
+                env['python'] = include.get('python')
+                envs.append(env)
+        return envs
 
     def compute_dockerfile(self, skip_after_success=False):
         work_paths = []
-        self._transform_yml_matrix2env()
         self._python_version_env()
-        for version in self._python_versions:
-            for count, env in enumerate(self._compute('env') or [], 1):
-                self.reset()
-                self.curr_work_path = os.path.join(self.work_path,
-                                                   version.replace('.', '_'),
-                                                   str(count))
-                curr_dockerfile = \
-                    os.path.join(self.curr_work_path, self.dockerfile)
-                entryp_path = os.path.join(self.curr_work_path, "files",
-                                           "entrypoint.sh")
-                self.mkdir_p(os.path.dirname(entryp_path))
-                entryp_relpath = os.path.relpath(entryp_path,
-                                                 self.curr_work_path)
-                rvm_env_path = os.path.join(self.curr_work_path, "files",
-                                            "rvm_env.sh")
-                rvm_env_relpath = os.path.relpath(rvm_env_path,
-                                                  self.curr_work_path)
-                copies = []
-                for copy_path, dest in self.copy_paths:
-                    copies.append((self.copy_path(copy_path), dest))
-                kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
-                          'entrypoint_path': entryp_relpath,
-                          'python_version': version,
-                          'image': self.image, 'env': env, 'packages': [],
-                          'sources': [], 'rvm_env_path': rvm_env_relpath}
-                with open(curr_dockerfile, "w") as f_dockerfile, \
-                        open(entryp_path, "w") as f_entrypoint, \
-                        open(rvm_env_path, "w") as f_rvm:
-                    for section, _ in self._sections.items():
-                        if section == 'env':
-                            continue
-                        if skip_after_success and section == 'after_success':
-                            continue
-                        result = self._compute(section)
-                        if not result:
-                            continue
-                        keys_to_extend = ['copies', 'runs', 'entrypoints',
-                                          'packages', 'sources'] \
-                            if isinstance(result, dict) else []
-                        for key_to_extend in keys_to_extend:
-                            if key_to_extend in result:
-                                kwargs[key_to_extend].extend(
-                                    result[key_to_extend])
-                    kwargs.update(self.os_kwargs)
-                    dockerfile_content = \
-                        self.dockerfile_template.render(kwargs).strip('\n ')
-                    try:
-                        f_dockerfile.write(dockerfile_content.encode('utf-8'))
-                    except TypeError:
-                        f_dockerfile.write(dockerfile_content)
-                    entrypoint_content = \
-                        self.entrypoint_template.render(kwargs).strip('\n ')
-                    try:
-                        f_entrypoint.write(entrypoint_content.encode('utf-8'))
-                    except TypeError:
-                        f_entrypoint.write(entrypoint_content)
-                    rvm_env_content = self.jinja_env.get_template(
-                        'rvm_env.sh').render(kwargs).strip('\n ')
-                    try:
-                        f_rvm.write(rvm_env_content.encode('UTF-8'))
-                    except TypeError:
-                        f_rvm.write(rvm_env_content)
-                self.compute_build_scripts(count, version)
-                self.chmod_execution(entryp_path)
-                work_paths.append(self.curr_work_path)
-        self.reset()
+        envs_matrix = self._transform_yml_envmatrix2env()
+        envs_matrix_include = self._transform_yml_matrix2env()
+        if not envs_matrix_include:
+            for version in self._python_versions:
+                for index, env in enumerate(envs_matrix):
+                    work_paths.append(self._compute_dockerfile(
+                        (index + 1), version, env, skip_after_success))
+                if not envs_matrix:
+                    work_paths.append(
+                        self._compute_dockerfile(1, version, "",
+                                                 skip_after_success))
+        index = 1
+        python = ''
+        for env in envs_matrix_include:
+            if python != str(env['python']):
+                index = 1
+            python = str(env['python'])
+            work_paths.append(self._compute_dockerfile(
+                index, python, env['env'],
+                skip_after_success))
+            index = index + 1
         return work_paths
+
+    def _compute_dockerfile(self, count, version, env, skip_after_success=False):
+        work_path = ''
+        self.reset()
+        self.curr_work_path = os.path.join(self.work_path,
+                                           version.replace('.', '_'),
+                                           str(count))
+        curr_dockerfile = os.path.join(self.curr_work_path, self.dockerfile)
+        entryp_path = os.path.join(self.curr_work_path, "files",
+                                   "entrypoint.sh")
+        self.mkdir_p(os.path.dirname(entryp_path))
+        entryp_relpath = os.path.relpath(entryp_path, self.curr_work_path)
+        rvm_env_path = os.path.join(self.curr_work_path, "files", "rvm_env.sh")
+        rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
+        copies = []
+        for copy_path, dest in self.copy_paths:
+            copies.append((self.copy_path(copy_path), dest))
+            kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
+                      'entrypoint_path': entryp_relpath,
+                      'python_version': version,
+                      'image': self.image, 'env': env, 'packages': [],
+                      'sources': [], 'rvm_env_path': rvm_env_relpath}
+            with open(curr_dockerfile, "w") as f_dockerfile, \
+                    open(entryp_path, "w") as f_entrypoint, \
+                    open(rvm_env_path, "w") as f_rvm:
+                for section, _ in self._sections.items():
+                    if section == 'env':
+                        continue
+                    if skip_after_success and section == 'after_success':
+                        continue
+                    result = self._compute(section)
+                    if not result:
+                        continue
+                    keys_to_extend = ['copies', 'runs', 'entrypoints',
+                                      'packages', 'sources'] \
+                        if isinstance(result, dict) else []
+                    for key_to_extend in keys_to_extend:
+                        if key_to_extend in result:
+                            kwargs[key_to_extend].extend(result[key_to_extend])
+                kwargs.update(self.os_kwargs)
+                dockerfile_content = \
+                    self.dockerfile_template.render(kwargs).strip('\n ')
+                try:
+                    f_dockerfile.write(dockerfile_content.encode('utf-8'))
+                except TypeError:
+                    f_dockerfile.write(dockerfile_content)
+                entrypoint_content = \
+                    self.entrypoint_template.render(kwargs).strip('\n ')
+                try:
+                    f_entrypoint.write(entrypoint_content.encode('utf-8'))
+                except TypeError:
+                    f_entrypoint.write(entrypoint_content)
+                rvm_env_content = self.jinja_env.get_template(
+                    'rvm_env.sh').render(kwargs).strip('\n ')
+                try:
+                    f_rvm.write(rvm_env_content.encode('UTF-8'))
+                except TypeError:
+                    f_rvm.write(rvm_env_content)
+            self.compute_build_scripts(count, version)
+            self.chmod_execution(entryp_path)
+            work_path = self.curr_work_path
+        self.reset()
+        return work_path
 
     def copy_path(self, path):
         """

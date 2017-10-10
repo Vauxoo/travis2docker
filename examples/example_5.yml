@@ -1,0 +1,47 @@
+language: python
+
+sudo: false
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip
+
+addons:
+  apt:
+    sources:
+      - pov-wkhtmltopdf
+      - chef-stable-trusty
+    packages:
+      - python-lxml
+      - wkhtmltopdf
+      - chefdk
+
+python:
+  - "2.7"
+
+env:
+  global:
+    - GLOBAL="global variable"
+  matrix:
+    - MATRIX="matrix build"
+
+matrix:
+  include:
+    - python: 2.7
+      env:
+        VARIABLE_INCLUDE_1="value include 1"
+    - python: 3.5
+      env:
+        VARIABLE_INCLUDE_2="value include 2"
+
+virtualenv:
+  system_site_packages: true
+
+install:
+  - touch install
+
+script:
+  - touch script
+
+after_success:
+  - touch after_success
