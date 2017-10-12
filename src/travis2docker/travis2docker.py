@@ -87,7 +87,6 @@ class Travis2Docker(object):
             jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
         self.image = image
         self._sections = collections.OrderedDict()
-        self._sections['env'] = 'env'
         self._sections['env_global'] = 'env_global'
         self._sections['addons'] = 'addons'
         self._sections['before_install'] = 'run'
@@ -113,7 +112,7 @@ class Travis2Docker(object):
         if not section_type:
             return None
         section_data = self.yml.get(section, "")
-        if section not in ("env", "env_global") and not section_data:
+        if section != 'env_global' and not section_data:
             return None
         if not isinstance(section_data, (list, dict, tuple)):
             section_data = [section_data]
