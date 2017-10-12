@@ -225,6 +225,11 @@ class Travis2Docker(object):
             self._python_versions.append(version)
 
     def _transform_yml_envmatrix2env(self):
+        """This method get the environment variables in the follow format
+            env:
+                matrix:
+                    - VARIABLE="value"
+        """
         envs = []
         if not self.yml.get('env'):
             return envs
@@ -236,6 +241,13 @@ class Travis2Docker(object):
         return envs
 
     def _transform_yml_matrix2env(self):
+        """This method get the environment variables in the follow format
+            matrix:
+                include:
+                    - python: 2.7
+                      env:
+                          - VARIABLE="value"
+        """
         envs = []
         globals = self._compute('env_global')
         matrix = self.yml.pop('matrix', {})
