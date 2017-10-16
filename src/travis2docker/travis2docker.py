@@ -120,9 +120,8 @@ class Travis2Docker(object):
         return job_method(section_data, section)
 
     def _compute_env_global(self, data, _):
-        globals = (self.yml.get('env').get('global')
-                   if isinstance(self.yml.get('env'), dict) else [])
-        return globals
+        return (self.yml.get('env').get('global')
+                if isinstance(self.yml.get('env'), dict) else [])
 
     def _compute_run(self, data, section):
         args = self._make_script(data, section, add_run=True, prefix='files')
@@ -233,11 +232,11 @@ class Travis2Docker(object):
         envs = []
         if not self.yml.get('env'):
             return envs
-        globals = self._compute('env_global')
+        env_globals = self._compute('env_global')
         values = (self.yml.get('env').get('matrix', [])
                   if isinstance(self.yml.get('env'), dict)
                   else self.yml.get('env', []))
-        envs = [(" ".join(globals) + " " + env).strip() for env in values]
+        envs = [(" ".join(env_globals) + " " + env).strip() for env in values]
         return envs
 
     def _transform_yml_matrix2env(self):
@@ -249,12 +248,12 @@ class Travis2Docker(object):
                           - VARIABLE="value"
         """
         envs = []
-        globals = self._compute('env_global')
+        env_globals = self._compute('env_global')
         matrix = self.yml.pop('matrix', {})
         for include in matrix.get('include', []):
             env = {}
             if include.get('env', False) and include.get('python', False):
-                env['env'] = (" ".join(globals) + " " +
+                env['env'] = (" ".join(env_globals) + " " +
                               include.get('env')).strip()
                 env['python'] = include.get('python')
                 envs.append(env)
