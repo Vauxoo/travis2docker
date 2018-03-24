@@ -45,11 +45,14 @@ def test_main():
     dirname_example = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '..', 'examples')
     argv = ['travis2docker', 'foo', 'bar', '--no-clone']
+
     sources_py = ("source ${REPO_REQUIREMENTS}/virtualenv/"
                   "python2.7${VERSION}/bin/activate")
     sources_js = "source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate"
     lines_required = [
-        'RUN /bin/bash -c "{source_py} && {source_js} '
+        'RUN ln -s ${{REPO_REQUIREMENTS}}/virtualenv/python2.7 '
+        '${{REPO_REQUIREMENTS}}/virtualenv/python2.7${{VERSION}} || true && '
+        '/bin/bash -c "{source_py} && {source_js} '
         '&& source /rvm_env.sh && /install"'.
         format(source_py=sources_py, source_js=sources_js),
         'ENTRYPOINT /entrypoint.sh',
@@ -113,7 +116,9 @@ def test_main():
                   "python3.5${VERSION}/bin/activate")
     lines_required.pop(0)
     lines_required.append(
-        'RUN /bin/bash -c "{source_py} && {source_js} && '
+        'RUN ln -s ${{REPO_REQUIREMENTS}}/virtualenv/python3.5 '
+        '${{REPO_REQUIREMENTS}}/virtualenv/python3.5${{VERSION}} || true && '
+        '/bin/bash -c "{source_py} && {source_js} && '
         'source /rvm_env.sh && '
         '/before_install && /install"'.
         format(source_py=sources_py, source_js=sources_js),
