@@ -324,7 +324,10 @@ class Travis2Docker(object):
         if os.path.isdir(dest_path):
             shutil.rmtree(dest_path)
         if os.path.isdir(src):
-            shutil.copytree(src, dest_path)
+            try:
+                shutil.copytree(src, dest_path)
+            except shutil.Error:
+                pass  # There are permissions errors to copy
         elif os.path.isfile(src):
             shutil.copy(src, dest_path)
         else:
