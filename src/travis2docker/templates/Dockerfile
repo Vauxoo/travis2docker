@@ -16,8 +16,12 @@ ENV PATH=${PATH}:/home/travis/.nvm/v0.10.36/bin:/home/travis/.nvm/v0.10.36/lib/n
 
 {%- for src, dest in copies or [] %}
 COPY {{ src }} {{ dest }}
-RUN chown -R {{ user }}:{{ user }} {{dest}}
 {% endfor -%}
+
+{% if copies -%}
+RUN {% for src, dest in copies or [] -%} chown -R {{ user }}:{{ user }} {{dest}};
+{%- endfor -%}
+{%- endif %}
 
 {% if sources -%}
 RUN {{ ' && '.join(sources)  }}
