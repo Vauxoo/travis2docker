@@ -229,10 +229,11 @@ class Travis2Docker(object):
             return False
         if not isinstance(versions, list):
             versions = [versions]
-        for version in versions:
-            if version in self._python_versions:
-                continue
-            self._python_versions.append(version)
+        # TODO: Use full version if in the default base image are installed
+        new_versions = set(
+            '.'.join(version.split('.')[:2]) for version in versions)
+        self._python_versions = list(
+            set(self._python_versions) | new_versions)
 
     def _transform_yml_matrix2env(self):
         matrix = self.yml.pop('matrix', {})
