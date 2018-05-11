@@ -1,0 +1,42 @@
+language: python
+
+sudo: false
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip
+
+addons:
+  postgresql: "9.5"
+  apt:
+    sources:
+      - pov-wkhtmltopdf
+      - chef-stable-trusty
+    packages:
+      - python-lxml
+      - wkhtmltopdf
+      - chefdk
+
+python:
+  - "2.7"
+
+matrix:
+  include:
+    - python: 2.7
+      env:
+        VARIABLE_INCLUDE_1="value include 1"
+    - python: 2.7
+      env:
+        VARIABLE_INCLUDE_2="value include 2"
+
+virtualenv:
+  system_site_packages: true
+
+install:
+  - touch install
+
+script:
+  - touch script
+
+after_success:
+  - touch after_success

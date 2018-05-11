@@ -119,8 +119,7 @@ class Travis2Docker(object):
         job_method = getattr(self, '_compute_' + section_type)
         return job_method(section_data, section)
 
-    @staticmethod
-    def _compute_env(data, _):
+    def _compute_env(self, data, _):
         if isinstance(data, list):
             # old version without matrix
             data = {'matrix': data}
@@ -131,6 +130,9 @@ class Travis2Docker(object):
                 continue
             env_globals += " " + env_global
         env_globals = env_globals.strip()
+        psql_version = (self.yml.get('addons') or {}).get('postgresql')
+        if psql_version:
+            env_globals += ' PSQL_VERSION="%s"' % psql_version
         for env_matrix in data.get('matrix', []):
             yield (env_globals + " " + env_matrix).strip()
 
