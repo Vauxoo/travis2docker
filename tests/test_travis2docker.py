@@ -106,6 +106,20 @@ def test_main():
         dkr_content = f_dkr.read()
         assert 'VARIABLE_INCLUDE_2="value include 2"' in dkr_content
 
+    # Tests that, when specified, the postgresql key sets
+    # automatically the environment variable $PSQL_VERSION
+    example = os.path.join(dirname_example, 'example_5.yml')
+    sys.argv = argv + ['--travis-yml-path', example]
+    scripts = main()
+    assert len(scripts) == 2, 'Scripts returned should be 2 for %s' % example
+    check_failed_dockerfile(scripts)
+    with open(os.path.join(scripts[0], 'Dockerfile')) as f_dkr:
+        dkr_content = f_dkr.read()
+        assert ' PSQL_VERSION="9.5" ' in dkr_content
+    with open(os.path.join(scripts[1], 'Dockerfile')) as f_dkr:
+        dkr_content = f_dkr.read()
+        assert ' PSQL_VERSION="9.5" ' in dkr_content
+
     url = 'https://github.com/Vauxoo/travis2docker.git'
     sys.argv = ['travis2docker', url, 'master']
     scripts = main()
