@@ -182,7 +182,7 @@ class Travis2Docker(object):
                     for _, _, var, value in self.re_export.findall(line)])
                 f_section.write('\n' + line)
             if section == 'script':
-                f_section.write('\nsleep 2\n')
+                f_section.write('\npg_isready -q && /etc/init.d/postgresql stop\n')
         src = "./" + os.path.relpath(file_path, self.curr_work_path)
         dest = "/" + section
         args = {
