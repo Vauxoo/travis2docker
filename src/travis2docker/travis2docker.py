@@ -183,6 +183,9 @@ class Travis2Docker(object):
                 f_section.write('\n' + line)
             if section == 'script':
                 f_section.write('\nsleep 2\n')
+                f_section.write('/etc/init.d/postgresql stop\n')
+                f_section.write('rm -f /var/run/postgresql/.s.PGSQL.5432*\n')
+
         src = "./" + os.path.relpath(file_path, self.curr_work_path)
         dest = "/" + section
         args = {
