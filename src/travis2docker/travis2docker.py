@@ -60,12 +60,16 @@ class Travis2Docker(object):
 
     def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
+                 runs_at_the_end_script=None
                  ):
         self._python_versions = []
         self.curr_work_path = None
         self.curr_exports = []
         self.build_extra_params = {}
         self.run_extra_params = {}
+        self.runs_at_the_end_script = (
+            ["sleep 2"] if runs_at_the_end_script is None
+            else runs_at_the_end_script)
         if image is None:
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
@@ -182,7 +186,8 @@ class Travis2Docker(object):
                     for _, _, var, value in self.re_export.findall(line)])
                 f_section.write('\n' + line)
             if section == 'script':
-                f_section.write('\nsleep 2\n')
+                for run_at_the_end_script in self.runs_at_the_end_script:
+                    f_section.write('\n%s' % run_at_the_end_script)
         src = "./" + os.path.relpath(file_path, self.curr_work_path)
         dest = "/" + section
         args = {
