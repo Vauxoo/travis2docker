@@ -97,7 +97,7 @@ class Travis2Docker(object):
         self._sections['install'] = 'run'
         self._sections['script'] = 'entrypoint'
         self._sections['after_success'] = 'entrypoint'
-        self.yml = yaml.load(yml_buffer)
+        self.yml = yaml.full_load(yml_buffer)
         if work_path is None:
             base_name = os.path.splitext(os.path.basename(__file__))[0]
             self.work_path = os.path.join(gettempdir(), base_name)
