@@ -154,6 +154,15 @@ def main():
         help='Extra commands to run after "script" file. '
         'Note: You can use \\$IMAGE escaped environment variable.',
     )
+    parser.add_argument(
+        '--build-env-args', dest='build_env_args',
+        nargs='*', action='append', default=[],
+        help='Args used as environment variables '
+        'More info about: https://vsupalov.com/docker-build-time-env-values\n'
+        'E.g. --build-env-args ENVAR1\n'
+        'It generates the following line for Dockerfile:\n'
+        'ARG ENVVAR1\nENV ENVVAR1=$ENVVAR1',
+    )
 
     args = parser.parse_args()
     revision = args.git_revision
@@ -172,6 +181,8 @@ def main():
     no_clone = args.no_clone
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(',')
     runs_at_the_end_script = args.runs_at_the_end_script or None
+    build_env_args = [
+        build_env_args[0] for build_env_args in args.build_env_args]
     rcfiles = [
         (expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file)))
         for rc_file in rcfiles_args]
@@ -213,6 +224,7 @@ def main():
         os_kwargs=os_kwargs,
         copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles,
         runs_at_the_end_script=runs_at_the_end_script,
+        build_env_args=build_env_args,
     )
     t2d.build_extra_params = {
         'extra_params': build_extra_args,

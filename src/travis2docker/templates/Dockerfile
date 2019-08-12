@@ -3,6 +3,12 @@ COPY {{ entrypoint_path }} /entrypoint.sh
 RUN chown -R {{ user }}:{{ user }} /entrypoint.sh
 COPY {{ rvm_env_path }} /rvm_env.sh
 RUN chown -R {{ user }}:{{ user }} /rvm_env.sh
+
+{%- for build_env_arg in build_env_args %}
+ARG {{ build_env_arg }}
+ENV {{ build_env_arg }}=${{ build_env_arg }}
+{% endfor -%}
+
 ENV HOME=
 {%- if user == 'root' -%}
 /root
