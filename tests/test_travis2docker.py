@@ -139,3 +139,11 @@ def test_main():
     scripts = main()
     check_failed_dockerfile(scripts, lines_required + [
         'ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker'])
+
+    sys.argv += ['--build-env-args', 'BUILD_ENV1',
+                 '--build-env-args', 'BUILD_ENV2']
+    scripts = main()
+    check_failed_dockerfile(scripts, lines_required + [
+        'ARG BUILD_ENV1', 'ENV BUILD_ENV1=$BUILD_ENV1',
+        'ARG BUILD_ENV2', 'ENV BUILD_ENV2=$BUILD_ENV2',
+    ])

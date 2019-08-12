@@ -64,13 +64,14 @@ class Travis2Docker(object):
 
     def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
-                 runs_at_the_end_script=None
+                 runs_at_the_end_script=None, build_env_args=None,
                  ):
         self._python_versions = []
         self.curr_work_path = None
         self.curr_exports = []
         self.build_extra_params = {}
         self.run_extra_params = {}
+        self.build_env_args = build_env_args
         self.runs_at_the_end_script = (
             ["sleep 2"] if runs_at_the_end_script is None
             else runs_at_the_end_script)
@@ -281,7 +282,9 @@ class Travis2Docker(object):
                           'entrypoint_path': entryp_relpath,
                           'python_version': version,
                           'image': self.image, 'env': env, 'packages': [],
-                          'sources': [], 'rvm_env_path': rvm_env_relpath}
+                          'sources': [], 'rvm_env_path': rvm_env_relpath,
+                          'build_env_args': self.build_env_args,
+                          }
                 with open(curr_dockerfile, "w") as f_dockerfile, \
                         open(entryp_path, "w") as f_entrypoint, \
                         open(rvm_env_path, "w") as f_rvm:
