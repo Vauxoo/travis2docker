@@ -8,7 +8,11 @@ import stat
 from tempfile import gettempdir
 
 import jinja2
-import yaml
+
+try:
+    from yaml import full_load as yaml_load
+except ImportError:
+    from yaml import load as yaml_load
 
 RE_ENV_STR = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + \
              r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
@@ -97,7 +101,7 @@ class Travis2Docker(object):
         self._sections['install'] = 'run'
         self._sections['script'] = 'entrypoint'
         self._sections['after_success'] = 'entrypoint'
-        self.yml = yaml.load(yml_buffer)
+        self.yml = yaml_load(yml_buffer)
         if work_path is None:
             base_name = os.path.splitext(os.path.basename(__file__))[0]
             self.work_path = os.path.join(gettempdir(), base_name)
