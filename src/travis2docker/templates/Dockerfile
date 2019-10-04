@@ -72,6 +72,11 @@ ENV {{ env }}
 
 WORKDIR ${TRAVIS_BUILD_DIR}
 
+{% if runs_sudo -%}
+USER root
+RUN {{ ' && '.join(runs_sudo) }}
+USER {{ user }}
+{%- endif %}
 
 {% if runs -%}
 {% if image == 'quay.io/travisci/travis-python' -%}

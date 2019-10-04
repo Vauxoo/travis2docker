@@ -180,25 +180,42 @@ class Travis2Docker(object):
     def _make_script(self, data, section, add_entrypoint=False, add_run=False,
                      prefix=""):
         file_path = os.path.join(self.curr_work_path, prefix, section)
+        sudo_file_path = os.path.join(self.curr_work_path, prefix, 'sudo_' + section)
         self.mkdir_p(os.path.dirname(file_path))
+        has_sudo = False
         with open(file_path, "w") as f_section:
-            f_section.write('#!/bin/bash\n')
-            for var, value in self.curr_exports:
-                f_section.write('\nexport %s=%s' % (var, value))
-            for line in data:
-                self.curr_exports.extend([
-                    (var, value)
-                    for _, _, var, value in self.re_export.findall(line)])
-                f_section.write('\n' + line)
-            if section == 'script':
-                for run_at_the_end_script in self.runs_at_the_end_script:
-                    f_section.write('\n%s' % run_at_the_end_script)
+            with open(sudo_file_path, "w") as f_sudo_section:
+                for fobj in f_section, f_sudo_section:
+                    fobj.write('#!/bin/bash\n')
+                    for var, value in self.curr_exports:
+                        fobj.write('\nexport %s=%s' % (var, value))
+                for line in data:
+                    if line.strip().startswith('sudo'):
+                        line = line.partition('sudo')[-1].strip()
+                        fobj = f_sudo_section
+                        has_sudo = True
+                    else:
+                        fobj = f_section
+                    self.curr_exports.extend([
+                        (var, value)
+                        for _, _, var, value in self.re_export.findall(line)])
+                    fobj.write('\n' + line)
+                if section == 'script':
+                    for run_at_the_end_script in self.runs_at_the_end_script:
+                        f_section.write('\n%s' % run_at_the_end_script)
+        if not has_sudo:
+            os.unlink(sudo_file_path)
+        else:
+            self.chmod_execution(sudo_file_path)
         src = "./" + os.path.relpath(file_path, self.curr_work_path)
         dest = "/" + section
+        src_sudo = "./" + os.path.relpath(sudo_file_path, self.curr_work_path)
+        dest_sudo = "/sudo_" + section
         args = {
-            'copies': [(src, dest)],
+            'copies': [(src, dest)] + [(src_sudo, dest_sudo)] if has_sudo else [],
             'entrypoints': [dest] if add_entrypoint else [],
             'runs': [dest] if add_run else [],
+            'runs_sudo': [dest_sudo] if add_run and has_sudo else [],
         }
         self.chmod_execution(file_path)
         return args
@@ -284,6 +301,7 @@ class Travis2Docker(object):
                           'image': self.image, 'env': env, 'packages': [],
                           'sources': [], 'rvm_env_path': rvm_env_relpath,
                           'build_env_args': self.build_env_args,
+                          'runs_sudo': [],
                           }
                 with open(curr_dockerfile, "w") as f_dockerfile, \
                         open(entryp_path, "w") as f_entrypoint, \
@@ -296,7 +314,7 @@ class Travis2Docker(object):
                         result = self._compute(section)
                         if not result:
                             continue
-                        keys_to_extend = ['copies', 'runs', 'entrypoints',
+                        keys_to_extend = ['copies', 'runs', 'runs_sudo', 'entrypoints',
                                           'packages', 'sources'] \
                             if isinstance(result, dict) else []
                         for key_to_extend in keys_to_extend:

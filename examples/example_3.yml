@@ -29,6 +29,7 @@ virtualenv:
 
 install:
   - touch install
+  - sudo touch install_root
 
 script:
   - touch script

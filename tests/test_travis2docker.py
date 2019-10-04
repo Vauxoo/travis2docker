@@ -51,6 +51,7 @@ def test_main():
     lines_required = [
         'RUN /bin/bash -c "{source_py} && {source_js} '
         '&& source /rvm_env.sh && /install"'.
+        'RUN /bin/bash -c touch install_root',
         format(source_py=sources_py, source_js=sources_js),
         'ENTRYPOINT /entrypoint.sh',
     ]
