@@ -116,11 +116,13 @@ class Travis2Docker(object):
         self.ubuntu_json = json.load(
             open(os.path.join(travis_ci_apt_src, "ubuntu.json")))
 
-    def _compute(self, section):
+    def _compute(self, section, yml=None):
+        if yml is None:
+            yml = self.yml
         section_type = self._sections.get(section)
         if not section_type:
             return None
-        section_data = self.yml.get(section, "")
+        section_data = yml.get(section, "")
         if section != "env" and not section_data:
             return None
         if not isinstance(section_data, (list, dict, tuple)):
@@ -142,7 +144,8 @@ class Travis2Docker(object):
         psql_version = (self.yml.get('addons') or {}).get('postgresql')
         if psql_version:
             env_globals += ' PSQL_VERSION="%s"' % psql_version
-        for env_matrix in data.get('matrix', []):
+
+        for env_matrix in data.get('matrix', ['']):
             yield (env_globals + " " + env_matrix).strip()
 
     def _compute_run(self, data, section):
@@ -238,7 +241,7 @@ class Travis2Docker(object):
     def _python_version_env(self):
         versions = self.yml.pop('python', {})
         if not versions:
-            return False
+            return ['3.5']  # 3.5 by default
         if not isinstance(versions, list):
             versions = [versions]
         # TODO: Use full version if in the default base image are installed
@@ -258,73 +261,88 @@ class Travis2Docker(object):
         work_paths = []
         self._transform_yml_matrix2env()
         self._python_version_env()
+        # self._transform_yml_jobs2env()
+        jobs_stages = self.yml.pop('jobs', {}).get('include', {})
         for version in self._python_versions:
-            for count, env in enumerate(self._compute('env') or [], 1):
-                self.reset()
-                self.curr_work_path = os.path.join(self.work_path,
-                                                   version.replace('.', '_'),
-                                                   str(count))
-                curr_dockerfile = \
-                    os.path.join(self.curr_work_path, self.dockerfile)
-                entryp_path = os.path.join(self.curr_work_path, "files",
-                                           "entrypoint.sh")
-                self.mkdir_p(os.path.dirname(entryp_path))
-                entryp_relpath = os.path.relpath(entryp_path,
-                                                 self.curr_work_path)
-                rvm_env_path = os.path.join(self.curr_work_path, "files",
-                                            "rvm_env.sh")
-                rvm_env_relpath = os.path.relpath(rvm_env_path,
-                                                  self.curr_work_path)
-                copies = []
-                for copy_path, dest in self.copy_paths:
-                    copies.append((self.copy_path(copy_path), dest))
-                kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
-                          'entrypoint_path': entryp_relpath,
-                          'python_version': version,
-                          'image': self.image, 'env': env, 'packages': [],
-                          'sources': [], 'rvm_env_path': rvm_env_relpath,
-                          'build_env_args': self.build_env_args,
-                          }
-                with open(curr_dockerfile, "w") as f_dockerfile, \
-                        open(entryp_path, "w") as f_entrypoint, \
-                        open(rvm_env_path, "w") as f_rvm:
-                    for section, _ in self._sections.items():
-                        if section == 'env':
-                            continue
-                        if skip_after_success and section == 'after_success':
-                            continue
-                        result = self._compute(section)
-                        if not result:
-                            continue
-                        keys_to_extend = ['copies', 'runs', 'entrypoints',
-                                          'packages', 'sources'] \
-                            if isinstance(result, dict) else []
-                        for key_to_extend in keys_to_extend:
-                            if key_to_extend in result:
-                                kwargs[key_to_extend].extend(
-                                    result[key_to_extend])
-                    kwargs.update(self.os_kwargs)
-                    dockerfile_content = \
-                        self.dockerfile_template.render(kwargs).strip('\n ')
+            for count, env in enumerate(self._compute('env'), 1):
+                for job_count, job_stage in enumerate(jobs_stages or [{}], 1):
                     try:
-                        f_dockerfile.write(dockerfile_content.encode('utf-8'))
-                    except TypeError:
-                        f_dockerfile.write(dockerfile_content)
-                    entrypoint_content = \
-                        self.entrypoint_template.render(kwargs).strip('\n ')
+                        env += ' %s' % self._compute_env(job_stage['env'], None)
+                    except KeyError:
+                        pass
                     try:
-                        f_entrypoint.write(entrypoint_content.encode('utf-8'))
-                    except TypeError:
-                        f_entrypoint.write(entrypoint_content)
-                    rvm_env_content = self.jinja_env.get_template(
-                        'rvm_env.sh').render(kwargs).strip('\n ')
-                    try:
-                        f_rvm.write(rvm_env_content.encode('UTF-8'))
-                    except TypeError:
-                        f_rvm.write(rvm_env_content)
-                self.compute_build_scripts(count, version)
-                self.chmod_execution(entryp_path)
-                work_paths.append(self.curr_work_path)
+                        version = job_stage['python']
+                    except KeyError:
+                        pass
+
+                    self.reset()
+                    self.curr_work_path = os.path.join(self.work_path,
+                                                       version.replace('.', '_'),
+                                                       "env_%d_job_%d" % (count, job_count))
+                    curr_dockerfile = \
+                        os.path.join(self.curr_work_path, self.dockerfile)
+                    entryp_path = os.path.join(self.curr_work_path, "files",
+                                               "entrypoint.sh")
+                    self.mkdir_p(os.path.dirname(entryp_path))
+                    entryp_relpath = os.path.relpath(entryp_path,
+                                                     self.curr_work_path)
+                    rvm_env_path = os.path.join(self.curr_work_path, "files",
+                                                "rvm_env.sh")
+                    rvm_env_relpath = os.path.relpath(rvm_env_path,
+                                                      self.curr_work_path)
+                    copies = []
+                    for copy_path, dest in self.copy_paths:
+                        copies.append((self.copy_path(copy_path), dest))
+                    kwargs = {'runs': [], 'copies': copies, 'entrypoints': [],
+                              'entrypoint_path': entryp_relpath,
+                              'python_version': version,
+                              'image': self.image, 'env': env, 'packages': [],
+                              'sources': [], 'rvm_env_path': rvm_env_relpath,
+                              'build_env_args': self.build_env_args,
+                              }
+                    with open(curr_dockerfile, "w") as f_dockerfile, \
+                            open(entryp_path, "w") as f_entrypoint, \
+                            open(rvm_env_path, "w") as f_rvm:
+                        for section, _ in self._sections.items():
+                            if section == 'env':
+                                continue
+                            if skip_after_success and section == 'after_success':
+                                continue
+                            # job section replace global one
+                            result = self._compute(section, job_stage)
+                            if not result:
+                                result = self._compute(section)
+                            if not result:
+                                continue
+                            keys_to_extend = ['copies', 'runs', 'entrypoints',
+                                              'packages', 'sources'] \
+                                if isinstance(result, dict) else []
+                            for key_to_extend in keys_to_extend:
+                                if key_to_extend in result:
+                                    kwargs[key_to_extend].extend(
+                                        result[key_to_extend])
+                        kwargs.update(self.os_kwargs)
+                        dockerfile_content = \
+                            self.dockerfile_template.render(kwargs).strip('\n ')
+                        try:
+                            f_dockerfile.write(dockerfile_content.encode('utf-8'))
+                        except TypeError:
+                            f_dockerfile.write(dockerfile_content)
+                        entrypoint_content = \
+                            self.entrypoint_template.render(kwargs).strip('\n ')
+                        try:
+                            f_entrypoint.write(entrypoint_content.encode('utf-8'))
+                        except TypeError:
+                            f_entrypoint.write(entrypoint_content)
+                        rvm_env_content = self.jinja_env.get_template(
+                            'rvm_env.sh').render(kwargs).strip('\n ')
+                        try:
+                            f_rvm.write(rvm_env_content.encode('UTF-8'))
+                        except TypeError:
+                            f_rvm.write(rvm_env_content)
+                    self.compute_build_scripts(count, version)
+                    self.chmod_execution(entryp_path)
+                    work_paths.append(self.curr_work_path)
         self.reset()
         return work_paths
 
