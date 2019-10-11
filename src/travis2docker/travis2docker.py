@@ -128,9 +128,9 @@ class Travis2Docker(object):
         if not isinstance(section_data, (list, dict, tuple)):
             section_data = [section_data]
         job_method = getattr(self, '_compute_' + section_type)
-        return job_method(section_data, section)
+        return job_method(section_data, section, yml)
 
-    def _compute_env(self, data, _):
+    def _compute_env(self, data, _, yml):
         if isinstance(data, list):
             # old version without matrix
             data = {'matrix': data}
@@ -141,23 +141,23 @@ class Travis2Docker(object):
                 continue
             env_globals += " " + env_global
         env_globals = env_globals.strip()
-        psql_version = (self.yml.get('addons') or {}).get('postgresql')
+        psql_version = (yml.get('addons') or {}).get('postgresql')
         if psql_version:
             env_globals += ' PSQL_VERSION="%s"' % psql_version
 
         for env_matrix in data.get('matrix', ['']):
             yield (env_globals + " " + env_matrix).strip()
 
-    def _compute_run(self, data, section):
+    def _compute_run(self, data, section, _):
         args = self._make_script(data, section, add_run=True, prefix='files')
         return args
 
-    def _compute_entrypoint(self, data, section):
+    def _compute_entrypoint(self, data, section, _):
         args = self._make_script(data, section, add_entrypoint=True,
                                  prefix='files')
         return args
 
-    def _compute_addons(self, data, section):
+    def _compute_addons(self, data, section, _):
         if 'apt' not in data:
             return
         sources = []
@@ -261,15 +261,16 @@ class Travis2Docker(object):
         work_paths = []
         self._transform_yml_matrix2env()
         self._python_version_env()
-        # self._transform_yml_jobs2env()
         jobs_stages = self.yml.pop('jobs', {}).get('include', {})
-        for version in self._python_versions:
-            for count, env in enumerate(self._compute('env'), 1):
+        for global_version in self._python_versions:
+            for count, global_env in enumerate(self._compute('env'), 1):
                 for job_count, job_stage in enumerate(jobs_stages or [{}], 1):
-                    try:
-                        env += ' %s' % self._compute_env(job_stage['env'], None)
-                    except KeyError:
-                        pass
+                    job_env = self._compute('env', job_stage) or ""
+                    if job_env is not None:
+                        job_env = next(job_env)
+                    env = '%s %s' % (global_env, job_env)
+                    env = env.strip()
+                    version = global_version
                     try:
                         version = job_stage['python']
                     except KeyError:
