@@ -262,13 +262,15 @@ class Travis2Docker(object):
         self._transform_yml_matrix2env()
         self._python_version_env()
         jobs_stages = self.yml.pop('jobs', {}).get('include', {})
-        for version in self._python_versions:
+        for global_version in self._python_versions:
             for count, global_env in enumerate(self._compute('env'), 1):
                 for job_count, job_stage in enumerate(jobs_stages or [{}], 1):
                     job_env = self._compute('env', job_stage) or ""
                     if job_env is not None:
-                        job_env = job_env.next()
+                        job_env = next(job_env)
                     env = '%s %s' % (global_env, job_env)
+                    env = env.strip()
+                    version = global_version
                     try:
                         version = job_stage['python']
                     except KeyError:
