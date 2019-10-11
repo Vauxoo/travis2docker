@@ -275,6 +275,7 @@ class Travis2Docker(object):
                         version = job_stage['python']
                     except KeyError:
                         pass
+                    version = "%s" % version
 
                     self.reset()
                     self.curr_work_path = os.path.join(self.work_path,
