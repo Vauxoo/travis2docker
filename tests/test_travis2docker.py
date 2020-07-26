@@ -4,12 +4,16 @@ import os
 import subprocess
 import sys
 
-from travis2docker.cli import main
+from travis2docker.cli import main as cli_main
 
 try:
     from shutil import which  # python3.x
 except ImportError:
     from whichcraft import which
+
+
+def main():
+    return cli_main(return_result=True)
 
 
 def check_failed_dockerfile(scripts, lines_required=None):

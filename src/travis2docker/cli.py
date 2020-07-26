@@ -20,6 +20,7 @@ from os.path import expandvars
 from os.path import isdir
 from os.path import isfile
 from os.path import join
+from sys import stdout
 from tempfile import gettempdir
 
 from . import __version__
@@ -54,7 +55,7 @@ def yml_read(yml_path):
         return f_yml.read()
 
 
-def main():
+def main(return_result=False):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "git_repo_url",
@@ -234,4 +235,11 @@ def main():
         'extra_params': run_extra_args,
         'extra_cmds': run_extra_cmds,
     }
-    return t2d.compute_dockerfile(skip_after_success=exclude_after_success)
+    fname_scripts = t2d.compute_dockerfile(skip_after_success=exclude_after_success)
+    if fname_scripts:
+        fname_list = '- ' + '\n- '.join(fname_scripts)
+        stdout.write('\nGenerated scripts:\n%s\n' % fname_list)
+    else:
+        stdout.write('\nNo scripts were generated.')
+    if return_result:
+        return fname_scripts
