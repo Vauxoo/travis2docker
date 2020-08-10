@@ -241,7 +241,8 @@ class Travis2Docker(object):
     def _python_version_env(self):
         versions = self.yml.pop('python', {})
         if not versions:
-            return ['3.5']  # 3.5 by default
+            self._python_versions = ['3.5']  # 3.5 by default
+            return
         if not isinstance(versions, list):
             versions = [versions]
         # TODO: Use full version if in the default base image are installed
