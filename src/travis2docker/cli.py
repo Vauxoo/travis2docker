@@ -34,7 +34,7 @@ def get_git_data(project, path, revision):
     git_obj.update()
     data = {
         'sha': git_obj.get_sha(revision),
-        'content': git_obj.show_file('.travis.yml', revision),
+        'content': git_obj.show_file('.travis.yml', revision) or git_obj.show_file('.t2d.yml', revision),
         'repo_owner': git_obj.owner,
         'repo_project': git_obj.repo,
         'git_email': git_obj.get_config_data("user.email"),
@@ -49,8 +49,12 @@ def yml_read(yml_path):
     yml_path_expanded = expandvars(expanduser(yml_path))
     if isdir(yml_path_expanded):
         yml_path_expanded = join(yml_path_expanded, '.travis.yml')
+        alt_yml_path_expanded = join(yml_path_expanded, '.t2d.yml')
     if not isfile(yml_path_expanded):
-        return
+        if isfile(alt_yml_path_expanded):
+            yml_path_expanded = alt_yml_path_expanded
+        else:
+            return
     with open(yml_path_expanded, "r") as f_yml:
         return f_yml.read()
 
