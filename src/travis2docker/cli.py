@@ -35,6 +35,7 @@ def get_git_data(project, path, revision):
     data = {
         'sha': git_obj.get_sha(revision),
         'content': git_obj.show_file('.travis.yml', revision) or git_obj.show_file('.t2d.yml', revision),
+        'variables_sh': git_obj.show_file('variables.sh', revision),
         'repo_owner': git_obj.owner,
         'repo_project': git_obj.repo,
         'git_email': git_obj.get_config_data("user.email"),
@@ -168,6 +169,11 @@ def main(return_result=False):
         'It generates the following line for Dockerfile:\n'
         'ARG ENVVAR1\nENV ENVVAR1=$ENVVAR1',
     )
+    parser.add_argument(
+        '--deployv', dest='deployv',
+        action='store_true', default=False,
+        help='Use the image generated from the CI and used in deployV',
+    )
 
     args = parser.parse_args()
     revision = args.git_revision
@@ -184,6 +190,7 @@ def main(return_result=False):
     build_extra_cmds = '\n'.join(args.build_extra_cmds)
     run_extra_cmds = '\n'.join(args.run_extra_cmds)
     no_clone = args.no_clone
+    deployv = args.deployv
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(',')
     runs_at_the_end_script = args.runs_at_the_end_script or None
     build_env_args = [
@@ -208,7 +215,7 @@ def main(return_result=False):
     if not yml_content:
         msg = "The file %s is empty." % (travis_yml_path) if travis_yml_path \
             else "The repo or the branch is incorrect value, because " + \
-                 "It can not got the .travis.yml content from %s %s. " % (
+                 "It can not got the .travis.yml or variables.sh content from %s %s. " % (
                     git_repo, revision) + \
                  "\nPlease, verify access repository," + \
                  "\nverify exists url and revision, " + \
@@ -230,6 +237,7 @@ def main(return_result=False):
         copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles,
         runs_at_the_end_script=runs_at_the_end_script,
         build_env_args=build_env_args,
+        deployv=deployv
     )
     t2d.build_extra_params = {
         'extra_params': build_extra_args,
@@ -243,6 +251,18 @@ def main(return_result=False):
     if fname_scripts:
         fname_list = '- ' + '\n- '.join(fname_scripts)
         stdout.write('\nGenerated scripts:\n%s\n' % fname_list)
+        if deployv:
+            stdout.write(
+                '\nUsing --deployv option you will need to run the following extra step '
+                'manually after to create the container or after running 20-run.sh script')
+            stdout.write(
+                '\ndocker exec -it --user=root CONTAINER chown -R odoo:odoo /home/odoo/.ssh\n')
+            if not default_docker_image:
+                stdout.write(
+                    '\nUsing --deployv option will build only stable branch (no dev custom branch or pull request compatible yet)\n'
+                    'But you can use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
+                    'get the PROJECT:TAG info in your "build_docker" pipeline similar to '
+                    '\n"... INFO  - deployv.deployv_addon_gitlab_tools.common.common.push_image - Pushing image ... to quay.io/vauxoo/PROJECT:TAG"\n')
     else:
         stdout.write('\nNo scripts were generated.')
     if return_result:

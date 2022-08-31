@@ -1,0 +1,41 @@
+FROM {{ image  }}
+
+ARG HOME=/home/odoo
+
+# rm -rf /home/odoo/.ssh
+
+{%- for src, dest in copies or [] %}
+COPY {{ src }} {{ dest }}
+{% endfor -%}
+
+{% if copies -%}
+RUN {% for src, dest in copies or [] -%} chown -R {{ user }}:{{ user }} {{dest}};
+{%- endfor -%}
+{%- endif %}
+
+{% if add_self_rsa_pub -%}
+RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
+{%- endif %}
+
+ENV ODOORC_DB_NAME=odoo ODOORC_PIDFILE=/home/odoo/.odoo.pid ODOORC_DATA_DIR=/home/odoo/data_dir PROFILE_FILE=/etc/bash.bashrc MAIN_REPO_FULL_PATH=/home/odoo/instance/$MAIN_REPO_PATH
+# Create cluster with odoo as owner and use environment variables instead of odoo cfg to connect
+RUN . /home/odoo/build.sh && \
+    install_dev_tools && \
+    service_postgres_without_sudo odoo odoo && \
+    install_pgcli_venv && \
+    custom_alias && \
+    odoo_conf && \
+    git_allow_fetch && \
+    chown -R odoo:odoo /home/odoo/.ssh && \
+    chown_all && \
+    bash_colorized && \
+    configure_zsh
+
+
+USER {{ user }}
+
+# TODO: Use .profile as bash profiler by default
+
+ENTRYPOINT /entrypoint.sh
+
+WORKDIR $MAIN_REPO_FULL_PATH
