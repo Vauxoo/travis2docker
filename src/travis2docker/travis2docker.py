@@ -25,7 +25,10 @@ class Travis2Docker(object):
 
     @property
     def dockerfile_template(self):
-        return self.jinja_env.get_template('Dockerfile')
+        dockerfile = 'Dockerfile'
+        if self.deployv:
+            dockerfile += '_deployv'
+        return self.jinja_env.get_template(dockerfile)
 
     @property
     def new_image(self):
@@ -65,22 +68,32 @@ class Travis2Docker(object):
     def __init__(self, yml_buffer, image=None, work_path=None, dockerfile=None,
                  templates_path=None, os_kwargs=None, copy_paths=None,
                  runs_at_the_end_script=None, build_env_args=None,
-                 ):
+                 deployv=None):
         self._python_versions = []
         self.curr_work_path = None
         self.curr_exports = []
         self.build_extra_params = {}
         self.run_extra_params = {}
         self.build_env_args = build_env_args
+        self.deployv = deployv
         self.runs_at_the_end_script = (
             ["sleep 2"] if runs_at_the_end_script is None
             else runs_at_the_end_script)
+        self.variables_sh_data = {}
+        if deployv:
+            self.variables_sh_data = {var.lower(): value for _, _, var, value in self.re_export.findall(os_kwargs['variables_sh'])}
+            image = "%(docker_image_repo)s:%(customer)s-%(version)s-latest" % self.variables_sh_data if not image else image
+            # TODO: Get the image based on the git sha
+            build_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', 'build.sh')
+            entrypoint_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', 'entrypoint_deployv.sh')
+            copy_paths.append([build_sh, '/home/odoo/build.sh'])
+            copy_paths.append([entrypoint_sh, '/entrypoint.sh'])
         if image is None:
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
             os_kwargs = {}
         default_user = 'root'
-        if image == 'vauxoo/odoo-80-image-shippable-auto':
+        if image == 'vauxoo/odoo-80-image-shippable-auto' or deployv:
             default_user = 'odoo'
         elif image == 'quay.io/travisci/travis-python':
             default_user = 'travis'
