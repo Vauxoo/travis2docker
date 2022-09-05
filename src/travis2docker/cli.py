@@ -92,7 +92,6 @@ def main(return_result=False):
              "exists value: 'build_image: IMAGE_NAME' "
              "in .travis.yml"
              "\nDefault: 'vauxoo/odoo-80-image-shippable-auto'",
-        default='vauxoo/odoo-80-image-shippable-auto'
     )
     default_root_path = os.environ.get('TRAVIS2DOCKER_ROOT_PATH')
     if not default_root_path:
@@ -198,6 +197,8 @@ def main(return_result=False):
     rcfiles = [
         (expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file)))
         for rc_file in rcfiles_args]
+    if not default_docker_image and not deployv:
+        default_docker_image = 'vauxoo/odoo-80-image-shippable-auto'
     if no_clone:
         os_kwargs = {
             'repo_owner': 'local_file',
