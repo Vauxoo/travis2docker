@@ -47,9 +47,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.python.org/pypi/travis2docker
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/travis2docker/v3.5.0.svg
-    :alt: Commits since latest release
-    :target: https://github.com/Vauxoo/travis2docker/compare/v3.5.0...main
+.. .. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/travis2docker/v3.5.0.svg
+..     :alt: Commits since latest release
+..     :target: https://github.com/Vauxoo/travis2docker/compare/v3.5.0...main
 
 .. end-badges
 
