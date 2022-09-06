@@ -86,8 +86,10 @@ class Travis2Docker(object):
             # TODO: Get the image based on the git sha
             build_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', 'build.sh')
             entrypoint_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', 'entrypoint_deployv.sh')
+            docker_helper = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'docker_helper')
             copy_paths.append([build_sh, '/home/odoo/build.sh'])
             copy_paths.append([entrypoint_sh, '/entrypoint.sh'])
+            copy_paths.append([docker_helper, '/home/odoo/build'])
         if image is None:
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:

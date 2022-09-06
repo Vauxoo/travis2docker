@@ -25,11 +25,13 @@ RUN . /home/odoo/build.sh && \
     install_pgcli_venv && \
     custom_alias && \
     odoo_conf && \
-    git_allow_fetch && \
+    git_set_remote && \
     chown -R odoo:odoo /home/odoo/.ssh && \
     chown_all && \
     bash_colorized && \
-    configure_zsh
+    configure_zsh && \
+    mv /entrypoint_image /deployv_entrypoint_image && \
+    mv /entry_point.py /deployv_entry_point.py
 
 
 USER {{ user }}
