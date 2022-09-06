@@ -1,5 +1,4 @@
-"""
-Entrypoint module, in case you use `python -mtravis2docker`.
+"""Entrypoint module, in case you use `python -mtravis2docker`.
 
 
 Why does this file exist, and why __main__? For more info, read:
