@@ -10,22 +10,18 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |travis| |appveyor|
+      - | |github-actions|
         | |codecov|
     * - package
-      - |version| |downloads| |wheel| |supported-versions| |supported-implementations|
+      - |version| |downloads| |wheel| |supported-versions| |supported-implementations| |commits-since|
 
 .. |docs| image:: https://readthedocs.org/projects/travis2docker/badge/?style=flat
     :target: https://readthedocs.org/projects/travis2docker
     :alt: Documentation Status
 
-.. |travis| image:: https://travis-ci.org/Vauxoo/travis2docker.svg?branch=master
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/Vauxoo/travis2docker
-
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/vauxoo/travis2docker?branch=master&svg=true
-    :alt: AppVeyor Build Status
-    :target: https://ci.appveyor.com/project/vauxoo/travis2docker
+.. |github-actions| image:: https://github.com/Vauxoo/travis2docker/actions/workflows/github-actions.yml/badge.svg
+    :alt: GitHub Actions Build Status
+    :target: https://github.com/Vauxoo/travis2docker/actions
 
 .. |codecov| image:: https://codecov.io/gh/Vauxoo/travis2docker/branch/master/graph/badge.svg
     :alt: Coverage Status
@@ -51,6 +47,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.python.org/pypi/travis2docker
 
+.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/travis2docker/v3.5.0.svg
+    :alt: Commits since latest release
+    :target: https://github.com/Vauxoo/travis2docker/compare/v3.5.0...main
 
 .. end-badges
 
