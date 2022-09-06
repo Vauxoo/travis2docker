@@ -1,0 +1,190 @@
+name: build
+on: [push, pull_request]
+jobs:
+
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'check'
+            python: '3.9'
+            toxpython: 'python3.9'
+            tox_env: 'check'
+            os: 'ubuntu-latest'
+          - name: 'docs'
+            python: '3.9'
+            toxpython: 'python3.9'
+            tox_env: 'docs'
+            os: 'ubuntu-latest'
+
+          # ubuntu
+          - name: 'py27 (ubuntu)'
+            python: '2.7'
+            toxpython: 'python2.7'
+            python_arch: 'x64'
+            tox_env: 'py27'
+            os: 'ubuntu-latest'
+          - name: 'py35 (ubuntu)'
+            python: '3.5'
+            toxpython: 'python3.5'
+            python_arch: 'x64'
+            tox_env: 'py35'
+            os: 'ubuntu-latest'
+          - name: 'py36 (ubuntu)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36'
+            os: 'ubuntu-latest'
+          - name: 'py37 (ubuntu)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37'
+            os: 'ubuntu-latest'
+          - name: 'py38 (ubuntu)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38'
+            os: 'ubuntu-latest'
+          - name: 'py39 (ubuntu) + pypi release'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39'
+            os: 'ubuntu-latest'
+          - name: 'py310 (ubuntu)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310'
+            os: 'ubuntu-latest'
+
+          # windows
+          - name: 'py36 (windows)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36'
+            os: 'windows-latest'
+          - name: 'py37 (windows)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37'
+            os: 'windows-latest'
+          - name: 'py38 (windows)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38'
+            os: 'windows-latest'
+          - name: 'py39 (windows)'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39'
+            os: 'windows-latest'
+          - name: 'py310 (windows)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310'
+            os: 'windows-latest'
+
+          # macos
+          - name: 'py27 (macos)'
+            python: '2.7'
+            toxpython: 'python2.7'
+            python_arch: 'x64'
+            tox_env: 'py27'
+            os: 'macos-latest'
+          - name: 'py35 (macos)'
+            python: '3.5'
+            toxpython: 'python3.5'
+            python_arch: 'x64'
+            tox_env: 'py35'
+            os: 'macos-latest'
+          - name: 'py36 (macos)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36'
+            os: 'macos-latest'
+          - name: 'py37 (macos)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37'
+            os: 'macos-latest'
+          - name: 'py38 (macos)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38'
+            os: 'macos-latest'
+          - name: 'py39 (macos)'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39'
+            os: 'macos-latest'
+          - name: 'py310 (macos)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310'
+            os: 'macos-latest'
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+        architecture: ${{ matrix.python_arch }}
+        cache: 'pip'
+    - name: Cache pre-commit packages
+      id: cache-pre-commit
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: ${{ runner.os }}-py${{ matrix.python }}-${{ matrix.python_arch }}-pre-commit
+    - name: install dependencies
+      run: |
+        python -mpip install --progress-bar=off -r ci/requirements.txt
+        virtualenv --version
+        pip --version
+        tox --version
+        pip list --format=freeze
+    - name: test
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: >-
+        mkdir -p ~/.ssh &&
+        tox -e ${{ matrix.tox_env }} -v
+    - name: Build a binary wheel and a source tarball
+      if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39')
+      run: >-
+        python -m pip install build wheel twine && python -m
+        build
+        --sdist
+        --wheel
+        --outdir dist_wo_pbr/ && python -m
+        build
+        --no-isolation
+        --sdist
+        --wheel
+        --outdir dist/ &&
+        twine check dist/*
+    - name: Publish package
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
