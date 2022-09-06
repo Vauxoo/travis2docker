@@ -1,7 +1,17 @@
 name: build
-on: [push, pull_request]
-jobs:
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    tags:
+      - v*
 
+jobs:
   test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
