@@ -1,4 +1,4 @@
-
+# pylint: disable=useless-object-inheritance,print-used,except-pass
 from __future__ import print_function
 
 import os
@@ -14,7 +14,6 @@ def decode_utf(field):
 
 
 class GitRun(object):
-
     def __init__(self, repo_git, path, path_prefix_repo=False):
         self.repo_git = repo_git
         if path_prefix_repo:
@@ -29,8 +28,7 @@ class GitRun(object):
         if no_user:
             repo_git_sub = re.sub('.+@', '', repo_git_sub)
         repo_git_sub = re.sub('.git$', '', repo_git_sub)
-        match_object = re.search(
-            r'(?P<host>[^/]+)/(?P<owner>[^/]+)/(?P<repo>[^/]+)', repo_git_sub)
+        match_object = re.search(r'(?P<host>[^/]+)/(?P<owner>[^/]+)/(?P<repo>[^/]+)', repo_git_sub)
         if match_object:
             host = match_object.group("host")
             owner = match_object.group("owner")
@@ -86,11 +84,9 @@ class GitRun(object):
         #           'authorname', 'authoremail','subject','committername',
         #           'committeremail']
         fmt = "%00".join(["%(" + field + ")" for field in fields])
-        git_refs = self.run([
-            'for-each-ref', '--format', fmt, '--sort=refname'] + refs)
+        git_refs = self.run(['for-each-ref', '--format', fmt, '--sort=refname'] + refs)
         git_refs = git_refs.strip()
-        refs = [[decode_utf(field) for field in line.split(
-            '\x00')] for line in git_refs.split('\n')]
+        refs = [[decode_utf(field) for field in line.split('\x00')] for line in git_refs.split('\n')]
         res = {}
         for data_field in refs:
             subres = dict(zip(fields, data_field))
@@ -102,16 +98,13 @@ class GitRun(object):
         if not os.path.isdir(os.path.join(self.path)):
             os.makedirs(self.path)
         if not os.path.isdir(os.path.join(self.path, 'refs')):
-            subprocess.check_output([
-                'git', 'clone', '--bare', self.repo_git, self.path
-            ])
+            subprocess.check_output(['git', 'clone', '--bare', self.repo_git, self.path])
         self.run(['gc', '--auto', '--prune=all'])
         self.run(['fetch', '-p', 'origin', '+refs/heads/*:refs/heads/*'])
         # github support
         self.run(['fetch', 'origin', '+refs/pull/*/head:refs/pull/*'])
         # gitlab support
-        self.run([
-            'fetch', 'origin', '+refs/merge-requests/*/head:refs/pull/*'])
+        self.run(['fetch', 'origin', '+refs/merge-requests/*/head:refs/pull/*'])
 
     def show_file(self, git_file, sha):
         result = self.run(["show", "%s:%s" % (sha, git_file)])
@@ -119,5 +112,4 @@ class GitRun(object):
 
     def get_sha(self, revision):
         result = self.run(["rev-parse", revision])
-        return (result if isinstance(result, list)
-                else (result or '').strip(' \n'))
+        return result if isinstance(result, list) else (result or '').strip(' \n')

@@ -1,25 +1,16 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import io
 import re
 from glob import glob
-from os.path import basename
-from os.path import dirname
-from os.path import join
-from os.path import splitext
+from os.path import basename, dirname, join, splitext
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def read(*names, **kwargs):
-    return io.open(
-        join(dirname(__file__), *names),
-        encoding=kwargs.get('encoding', 'utf8')
-    ).read()
+    return io.open(join(dirname(__file__), *names), encoding=kwargs.get('encoding', 'utf8')).read()
 
 
 setup(
@@ -27,9 +18,10 @@ setup(
     version='6.1.2',
     license='BSD',
     description='Script to generate Dockerfile from .travis.yml file',
-    long_description='%s\n%s' % (
+    long_description='%s\n%s'
+    % (
         re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
+        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst')),
     ),
     author='Vauxoo',
     author_email='info@vauxoo.com',

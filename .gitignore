@@ -62,3 +62,13 @@ docs/_build
 .bootstrap
 .appveyor.token
 *.bak
+
+# pre-commit-vauxoo
+.editorconfig
+.eslintrc*
+.flake8*
+.isort.cfg
+.pre-commit*.yaml
+.prettierrc.yml
+.pylintrc*
+pyproject.toml
