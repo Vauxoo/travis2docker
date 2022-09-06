@@ -156,9 +156,8 @@ PS1=$UserMachine$Color_Off$PathShort\$\\n"\$(git_ps1_style)"$Color_Off\$" "
 EOF
 }
 
-git_allow_fetch(){
-    su odoo -c "find /home/odoo/instance/extra_addons/ -type d -name .git -exec git --git-dir={} config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" \;"
-    # TODO: git remote set-url
+git_set_remote(){
+    (su odoo -c "cd /home/odoo/build && python3 -c \"import build;build.git_set_remote()\"")
 }
 
 chown_all(){
