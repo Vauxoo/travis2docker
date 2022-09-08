@@ -164,10 +164,8 @@ git_set_remote(){
 }
 
 chown_all(){
-    chown -R odoo:odoo /home/odoo/.local \
-    /home/odoo/.openerp_serverrc \
-    /home/odoo/.ssh \
-    /etc/postgresql-common/common-vauxoo.conf
+    find /home/odoo -maxdepth 1 -user root -exec chown odoo:odoo -R {} \;
+    chown -R odoo:odoo /etc/postgresql-common/common-vauxoo.conf
 }
 
 configure_zsh(){
