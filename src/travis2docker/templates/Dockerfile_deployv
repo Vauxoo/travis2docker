@@ -25,9 +25,9 @@ RUN . /home/odoo/build.sh && \
     install_pgcli_venv && \
     custom_alias && \
     odoo_conf && \
-    git_set_remote && \
     chown -R odoo:odoo /home/odoo/.ssh && \
     chown_all && \
+    git_set_remote && \
     bash_colorized && \
     configure_zsh && \
     mv /entrypoint_image /deployv_entrypoint_image && \
