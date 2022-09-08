@@ -70,7 +70,6 @@ install_dev_tools(){
         pgbadger \
         p7zip-full mosh bpython \
         rsync \
-        zsh \
         gettext \
         net-tools \
         iproute2
@@ -170,13 +169,18 @@ chown_all(){
 
 configure_zsh(){
     # TODO: Add arg to install zsh
+    # Call this method with "apt update" before
+    apt install -y zsh
     wget -O /tmp/install_zsh.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh && \
         chmod +x /tmp/install_zsh.sh
     sh /tmp/install_zsh.sh "" --unattended
-    su odoo -c "sh /tmp/install_zsh.sh \"\" --unattended"
-    su odoo -c "mkdir -p /home/odoo/.oh-my-zsh/themes/" && \
-        su odoo -c "wget -O odoo-shippable.zsh-theme https://gist.githubusercontent.com/schminitz/9931af23bbb59e772eec/raw/cb524246fc93df242696bc3f502cababb03472ec/schminitz.zsh-theme"
-
+    cp -r /root/.oh-my-zsh /home/odoo
+    wget -O /home/odoo/.oh-my-zsh/themes/odoo-shippable.zsh-theme https://gist.githubusercontent.com/schminitz/9931af23bbb59e772eec/raw/cb524246fc93df242696bc3f502cababb03472ec/schminitz.zsh-theme
+    cp /root/.zshrc /home/odoo/.zshrc
+    chown -R odoo:odoo /home/odoo/.oh-my-zsh /home/odoo/.zshrc
+    sed -i 's/root/home\/odoo/g' /home/odoo/.zshrc
+    sed -i 's/robbyrussell/odoo-shippable/g' /home/odoo/.zshrc
+    sed -i 's/^plugins=(/plugins=(\n  virtualenv\n/' /home/odoo/.zshrc
     # default using bash
     usermod -s /bin/bash root
     usermod -s /bin/bash odoo
