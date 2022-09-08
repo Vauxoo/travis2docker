@@ -72,10 +72,12 @@ install_dev_tools(){
         rsync \
         zsh \
         gettext \
+        net-tools \
+        iproute2
         # aspell aspell-en aspell-es \
         # emacs \
         # byobu \
-        multitail
+        # multitail  # Set the terminal with red letters build the docker
 
     sudo pip install -q \
         ipython \
@@ -85,7 +87,8 @@ install_dev_tools(){
         pre-commit-vauxoo \
         diff-highlight \
         pg-activity \
-        nodeenv
+        nodeenv \
+        pdbpp
     # pre install pre-commit-vauxoo?
     # sudo su odoo -c "git init /tmp/test && cd /tmp/test && pre-commit-vauxoo -f"
     touch /home/odoo/full_test-requirements.txt
