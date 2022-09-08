@@ -26,7 +26,7 @@ def git_set_remote(path=None):
         path = "/home/odoo/instance"
     git_re = re.compile("([^/|@]+)/([^/]+)/([^/.]+(.git)?)")
     path = os.path.join(path, "*", "**", ".git")
-    hosts_scanned = {}
+    hosts_scanned = set()
     for git_dir in glob.glob(path, recursive=True):
         git_cmd = ["git", "--work-tree=%s" % os.path.dirname(git_dir), "--git-dir=%s" % git_dir]
         cmd = git_cmd + ["remote", "get-url", "--push", "origin"]
