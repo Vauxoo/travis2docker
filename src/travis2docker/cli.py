@@ -259,20 +259,21 @@ def main(return_result=False):
         fname_list = '- ' + '\n- '.join(fname_scripts)
         stdout.write('\nGenerated scripts:\n%s\n' % fname_list)
         if deployv:
+            stdout.write("="*80)
             stdout.write(
                 '\nUsing --deployv option you will need to run the following extra step '
                 'manually after to create the container or after running 20-run.sh script'
             )
             stdout.write('\ndocker exec -it --user=root CONTAINER chown -R odoo:odoo /home/odoo/.ssh\n')
             if not default_docker_image:
+                # TODO: Add the URL to open the pipelines
                 stdout.write(
-                    '\nUsing --deployv option will build only stable branch '
-                    '(no dev custom branch or pull request compatible yet)\n'
-                    'But you can use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
+                    '\nTIP: Use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
                     'get the PROJECT:TAG info in your "build_docker" pipeline similar to '
                     '\n"... INFO  - deployv.deployv_addon_gitlab_tools.common.common.push_image - '
                     'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"\n'
                 )
+            stdout.write("="*80)
     else:
         stdout.write('\nNo scripts were generated.')
     if return_result:
