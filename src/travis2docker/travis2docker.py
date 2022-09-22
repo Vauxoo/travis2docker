@@ -91,12 +91,12 @@ class Travis2Docker(object):
             self.variables_sh_data = {
                 var.lower(): value for _, _, var, value in self.re_export.findall(os_kwargs['variables_sh'])
             }
+            self.variables_sh_data.update({"sha_short": os_kwargs["sha"][:7]})
             image = (
-                "%(docker_image_repo)s:%(main_app)s-%(version)s-latest" % self.variables_sh_data
+                "%(docker_image_repo)s:%(main_app)s-%(version)s-%(sha_short)s" % self.variables_sh_data
                 if not image
                 else image
             )
-            # TODO: Get the image based on the git sha
             build_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', 'build.sh')
             entrypoint_sh = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), 'templates', 'entrypoint_deployv.sh'
