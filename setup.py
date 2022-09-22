@@ -15,7 +15,7 @@ def read(*names, **kwargs):
 
 setup(
     name='travis2docker',
-    version='6.3.3',
+    version='6.3.4',
     license='BSD',
     description='Script to generate Dockerfile from .travis.yml file',
     long_description='%s\n%s'
