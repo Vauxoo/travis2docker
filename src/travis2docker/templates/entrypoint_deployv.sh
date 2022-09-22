@@ -19,7 +19,7 @@ def start_psql():
     while True:
         print(".", end="")
         psql_subprocess = subprocess.Popen(
-            ["psql", "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["psql", "-XtA", "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         psql_subprocess.wait()
         psql_out = psql_subprocess.stderr.read()
@@ -42,9 +42,9 @@ def start_psql():
     # https://www.odoo.com/es_ES/forum/ayuda-1/question/internal-error-index-10107 # noqa
     cmd = [
         "psql",
-        "openerp_test",
-        "-c",
-        "REINDEX INDEX ir_translation_src_hash_idx",
+        os.environ["ODOORC_DB_NAME"],
+        "-XtAc",
+        "REINDEX INDEX ir_translation_src_hash_idx;",
     ]
     try:
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -79,12 +79,16 @@ def start_odoo():
     psql_cmd = [
         "psql",
         os.environ["ODOORC_DB_NAME"],
-        "-c",
-        "SELECT true FROM res_users LIMIT 1",
+        "-XtAc",
+        "SELECT 1 FROM res_users LIMIT 1;",
     ]
-    psql_exit_code = subprocess.call(psql_cmd)
-    install_modules = psql_exit_code != 0
-    if install_modules:
+    try:
+        subprocess.check_output(psql_cmd)
+        database_created = True
+    except subprocess.CalledProcessError:
+        database_created = False
+
+    if not database_created:
         cmd.extend(["-i", ",".join(modules), "--workers=0", "--stop-after-init"])
         if test_enable:
             # TODO: Generate coveragerc

@@ -259,7 +259,7 @@ def main(return_result=False):
         fname_list = '- ' + '\n- '.join(fname_scripts)
         stdout.write('\nGenerated scripts:\n%s\n' % fname_list)
         if deployv:
-            stdout.write("="*80)
+            stdout.write("=" * 80)
             stdout.write(
                 '\nUsing --deployv option you will need to run the following extra step '
                 'manually after to create the container or after running 20-run.sh script'
@@ -273,7 +273,7 @@ def main(return_result=False):
                     '\n"... INFO  - deployv.deployv_addon_gitlab_tools.common.common.push_image - '
                     'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"\n'
                 )
-            stdout.write("="*80)
+            stdout.write("=" * 80)
     else:
         stdout.write('\nNo scripts were generated.')
     if return_result:
