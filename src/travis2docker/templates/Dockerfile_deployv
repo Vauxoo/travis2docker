@@ -17,7 +17,7 @@ RUN {% for src, dest in copies or [] -%} chown -R {{ user }}:{{ user }} {{dest}}
 RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
 {%- endif %}
 
-ENV ODOORC_DB_NAME=odoo ODOORC_PIDFILE=/home/odoo/.odoo.pid ODOORC_DATA_DIR=/home/odoo/data_dir PROFILE_FILE=/etc/bash.bashrc MAIN_REPO_FULL_PATH=/home/odoo/instance/$MAIN_REPO_PATH
+ENV ODOORC_DB_NAME=odoo ODOORC_PIDFILE=/home/odoo/.odoo.pid ODOORC_DATA_DIR=/home/odoo/data_dir PROFILE_FILE=/etc/bash.bashrc MAIN_REPO_FULL_PATH=/home/odoo/instance/$MAIN_REPO_PATH DEB_PYTHON_INSTALL_LAYOUT=deb
 # Create cluster with odoo as owner and use environment variables instead of odoo cfg to connect
 RUN . /home/odoo/build.sh && \
     install_dev_tools && \
