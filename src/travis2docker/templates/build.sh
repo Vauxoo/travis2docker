@@ -72,6 +72,7 @@ install_dev_tools(){
         rsync \
         gettext \
         net-tools \
+        libecpg-dev \
         iproute2
         # aspell aspell-en aspell-es \
         # emacs \
