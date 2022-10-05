@@ -71,8 +71,10 @@ def git_set_remote(path=None):
             print(' '.join(cmd))
             subprocess.call(cmd)
 
-        # Add extra "-dev" remote
-        ssh_url_dev = "git@%s:%s-dev/%s" % (host, org, repo)
-        cmd = git_cmd + ["remote", "add", "dev", ssh_url_dev]
+        # Add extra remote if "stb" so add "dev" if "dev" so add "stb"
+        new_org = org.replace("-dev", "") if "-dev" in org else "%s-dev" % org
+        new_remote = "dev" if "dev" in new_org else "stb"
+        ssh_url_dev = "git@%s:%s/%s" % (host, new_org, repo)
+        cmd = git_cmd + ["remote", "add", new_remote, ssh_url_dev]
         print(' '.join(cmd))
         subprocess.call(cmd)
