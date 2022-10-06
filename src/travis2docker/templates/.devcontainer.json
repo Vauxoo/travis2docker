@@ -1,0 +1,19 @@
+{
+	"name": "{{ repo_project }}",
+	"dockerFile": "Dockerfile",
+	"context": ".",
+	"remoteUser": "root",
+	"workspaceFolder": "/home/odoo/instance",
+	"customizations": {
+		"vscode": {
+            "extensions": [
+				"redhat.vscode-xml",
+				"ms-python.python",
+				"mechatroner.rainbow-csv"
+			],
+            "settings": {
+                "python.analysis.extraPaths": ["/home/odoo/instance/odoo"]
+            }
+		}
+	}
+}

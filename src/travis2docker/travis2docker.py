@@ -352,10 +352,17 @@ class Travis2Docker(object):
                         except TypeError:
                             f_rvm.write(rvm_env_content)
                     self.compute_build_scripts(count, version)
+                    self.compute_devcontainer(self.curr_work_path)
                     self.chmod_execution(entryp_path)
                     work_paths.append(self.curr_work_path)
         self.reset()
         return work_paths
+
+    def compute_devcontainer(self, dest):
+        """Generate a .devcontainer.json file to automatically start a Development Container in Vscode"""
+        devcontainer = self.jinja_env.get_template(".devcontainer.json").render(self.os_kwargs)
+        with open(os.path.join(dest, ".devcontainer.json"), 'w') as fl:
+            fl.write(devcontainer)
 
     def copy_path(self, path):
         """:param paths list: List of paths to copy"""
