@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Odoo",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/odoo/instance/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "gevent": true,
+            "args": [
+                "-c", "/home/odoo/.openerp_serverrc"
+            ]
+        },
+        {
+            "name": "Odoo Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/odoo/instance/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "gevent": true,
+            "args": [
+                "-c", "/home/odoo/.openerp_serverrc",
+                "--test-tags", "standard"
+            ]
+        }
+    ]
+}
