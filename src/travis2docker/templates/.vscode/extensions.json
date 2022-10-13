@@ -1,3 +1,14 @@
 {
-    "recommendations": ["redhat.vscode-xml", "ms-python.python", "mechatroner.rainbow-csv"]
+    "recommendations": [
+        "eamodio.gitlens",
+        "ms-python.pylint",
+        "dotjoshjohnson.xml",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.flake8",
+        "dbaeumer.vscode-eslint",
+        "redhat.vscode-xml",
+        "mstuttgart.odoo-snippets",
+        "shardulm94.trailing-spaces"
+    ]
 }

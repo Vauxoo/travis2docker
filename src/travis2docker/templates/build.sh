@@ -78,7 +78,6 @@ install_dev_tools(){
         # emacs \
         # byobu \
         # multitail  # Set the terminal with red letters build the docker
-
     sudo pip install -q \
         ipython \
         py-spy \
@@ -89,6 +88,14 @@ install_dev_tools(){
         pg-activity \
         nodeenv \
         pdbpp
+
+    # Symlinks used by vscode and possibly other tools.
+    PCV_DIR="$(python3 -c "import pre_commit_vauxoo as pcv; print(pcv.__path__[0])")/cfg"
+    ln -sf "${PCV_DIR}/.pylintrc" "${HOME}/.pylintrc"
+    ln -sf "${PCV_DIR}/.flake8" "${HOME}/.flake8"
+    ln -sf "${PCV_DIR}/.isort.cfg" "${HOME}/.isort.cfg"
+    ln -sf "${PCV_DIR}/.eslintrc.json" "${HOME}/.eslintrc.json"
+
     # pre install pre-commit-vauxoo?
     # sudo su odoo -c "git init /tmp/test && cd /tmp/test && pre-commit-vauxoo -f"
     touch /home/odoo/full_test-requirements.txt
@@ -125,8 +132,6 @@ EOF
     # Configure emacs for odoo user
     git clone --depth 1 -b master https://github.com/Vauxoo/emacs.d.git /home/odoo/.emacs.d
     chown -R odoo:odoo /home/odoo/.emacs.d
-
-    # TODO: Install custom vim?
 }
 
 bash_colorized(){
