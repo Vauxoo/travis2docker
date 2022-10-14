@@ -16,7 +16,6 @@ import argparse
 import os
 from os.path import expanduser, expandvars, isdir, isfile, join
 from sys import stdout
-from tempfile import gettempdir
 
 from . import __version__
 from .exceptions import InvalidRepoBranchError
@@ -90,8 +89,8 @@ def main(return_result=False):
     )
     default_root_path = os.environ.get('TRAVIS2DOCKER_ROOT_PATH')
     if not default_root_path:
-        default_root_path = gettempdir()
-    default_root_path = join(default_root_path, 'travis2docker')
+        default_root_path = os.path.expanduser("~")
+    default_root_path = join(default_root_path, '.t2d')
     parser.add_argument(
         '--root-path',
         dest='root_path',
