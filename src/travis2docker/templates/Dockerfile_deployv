@@ -18,6 +18,10 @@ RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
 {%- endif %}
 
 ENV ODOORC_DB_NAME=odoo ODOORC_PIDFILE=/home/odoo/.odoo.pid ODOORC_DATA_DIR=/home/odoo/data_dir PROFILE_FILE=/etc/bash.bashrc MAIN_REPO_FULL_PATH=/home/odoo/instance/$MAIN_REPO_PATH DEB_PYTHON_INSTALL_LAYOUT=deb
+{% for build_env_arg in build_env_args %}
+ENV {{ build_env_arg }}=TRUE
+{% endfor %}
+
 # Create cluster with odoo as owner and use environment variables instead of odoo cfg to connect
 RUN . /home/odoo/build.sh && \
     install_dev_tools && \
@@ -29,6 +33,7 @@ RUN . /home/odoo/build.sh && \
     chown_all && \
     git_set_remote && \
     bash_colorized && \
+    configure_vim && \
     configure_zsh && \
     mv /entrypoint_image /deployv_entrypoint_image && \
     mv /entry_point.py /deployv_entry_point.py
