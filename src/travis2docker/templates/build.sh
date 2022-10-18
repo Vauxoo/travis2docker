@@ -169,8 +169,22 @@ chown_all(){
 }
 
 configure_vim(){
+    git_clone_copy(){
+      URL="${1}"
+      BRANCH="${2}"
+      WHAT="${3}"
+      WHERE="${4}"
+      TEMPDIR="$( mktemp -d )"
+      echo "Cloning ${URL} ..."
+      mkdir -p $( dirname "${WHERE}" )
+      git clone ${URL} --depth 1 -b ${BRANCH} -q --single-branch --recursive ${TEMPDIR}
+      rsync -aqz "${TEMPDIR}/${WHAT}" "${WHERE}"
+      rm -rf ${TEMPDIR}
+    }
+
     if [ -z ${VIM_INSTALL+x} ];
     then
+      echo "VIM_INSTALL is not defined. Skipping vim installation."
       return 0;
     fi
     # Upgrade & configure vim
@@ -179,15 +193,15 @@ configure_vim(){
     VIM_VERSION=$(dpkg -s vim | grep Version | sed -n 's/.*\([0-9]\+\.[0-9]\+\)\..*/\1/p' | sed -r 's/\.//g')
 
     wget -q -O /usr/share/vim/vim${VIM_VERSION}/spell/es.utf-8.spl http://ftp.vim.org/pub/vim/runtime/spell/es.utf-8.spl
-    git_clone_execute "${SPF13_REPO}" "3.0" "bootstrap.sh"
-    git_clone_copy "${VIM_OPENERP_REPO}" "master" "vim/" "${HOME}/.vim/bundle/vim-openerp"
-    git_clone_copy "${VIM_JEDI_REPO}" "master" "." "${HOME}/.vim/bundle/jedi-vim"
+    wget -O  - https://raw.githubusercontent.com/spf13/spf13-vim/3.0/bootstrap.sh | sh
+    git_clone_copy "https://github.com/vauxoo/vim-openerp.git" "master" "vim/" "${HOME}/.vim/bundle/vim-openerp"
+    git_clone_copy "https://github.com/davidhalter/jedi-vim.git" "master" "." "${HOME}/.vim/bundle/jedi-vim"
 
-    sed -i 's/ set mouse\=a/\"set mouse\=a/g' ~/.vimrc
-    sed -i "s/let g:neocomplete#enable_at_startup = 1/let g:neocomplete#enable_at_startup = 0/g" ~/.vimrc
+    sed -i 's/ set mouse\=a/\"set mouse\=a/g' ${HOME}/.vimrc
+    sed -i "s/let g:neocomplete#enable_at_startup = 1/let g:neocomplete#enable_at_startup = 0/g" ${HOME}/.vimrc
 
     # Disable virtualenv in Pymode
-    cat >> ~/.vimrc << EOF
+    cat >> ${HOME}/.vimrc << EOF
 " Disable virtualenv in Pymode
 let g:pymode_virtualenv = 0
 " Disable pymode init and lint because of https://github.com/python-mode/python-mode/issues/897
@@ -199,25 +213,25 @@ set nomodeline
 EOF
 
     # Disable vim-signify
-    cat >> ~/.vimrc << EOF
+    cat >> ${HOME}/.vimrc << EOF
 " Disable vim-signify
 let g:signify_disable_by_default = 1
 EOF
 
     # Install and configure YouCompleteMe
     VIM_YOUCOMPLETEME_PATH="${HOME}/.vim/bundle/YouCompleteMe"
-    git clone ${VIM_YOUCOMPLETEME_REPO} ${VIM_YOUCOMPLETEME_PATH}
+    git clone "https://github.com/Valloric/YouCompleteMe.git" ${VIM_YOUCOMPLETEME_PATH} -d 1
     # Install the custom version of YouCompleteMe because the last required g++ 4.9
     (cd "${VIM_YOUCOMPLETEME_PATH}" && git reset --hard c31152d34591f3211799ca1fe918eb78487e6dde && git submodule update --init --recursive && ./install.py)
-    cat >> ~/.vimrc << EOF
+    cat >> ${HOME}/.vimrc << EOF
 " Disable auto trigger for youcompleteme
 let g:ycm_auto_trigger = 0
 EOF
 
     # Install WakaTime
-    git_clone_copy "${VIM_WAKATIME_REPO}" "master" "." "${HOME}/.vim/bundle/vim-wakatime"
+    git_clone_copy "https://github.com/wakatime/vim-wakatime.git" "master" "." "${HOME}/.vim/bundle/vim-wakatime"
 
-    cat >> ~/.vimrc << EOF
+    cat >> ${HOME}/.vimrc << EOF
 colorscheme heliotrope
 set colorcolumn=119
 set spelllang=en,es
@@ -225,18 +239,18 @@ EOF
 
     # Configure pylint_odoo plugin and the .conf file
     # to enable python pylint_odoo checks and eslint checks into the vim editor.
-    cat >> ~/.vimrc << EOF
+    cat >> ${HOME}/.vimrc << EOF
 :filetype on
 let g:syntastic_aggregate_errors = 1
 let g:syntastic_python_checkers = ['pylint', 'flake8']
 let g:syntastic_auto_loc_list = 1
 let g:syntastic_python_pylint_args =
-    \ '--rcfile=/.repo_requirements/linit_hook/travis/cfg/travis_run_pylint_vim.cfg --valid_odoo_versions=14.0'
+    \ '--rcfile=${HOME}/.pylintrc'
 let g:syntastic_python_flake8_args =
-    \ '--config=/.repo_requirements/linit_hook/travis/cfg/travis_run_flake8.cfg'
+    \ '--config=${HOME}/.flake8'
 let g:syntastic_javascript_checkers = ['eslint']
 let g:syntastic_javascript_eslint_args =
-    \ '--config /.repo_requirements/linit_hook/travis/cfg/.jslintrc'
+    \ '--config ${HOME}/.eslintrc.json'
 " make YCM compatible with UltiSnips (using supertab) more info http://stackoverflow.com/a/22253548/3753497
 let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
 let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
@@ -249,7 +263,7 @@ let g:UltiSnipsJumpBackwardTrigger = "<s-tab>"
 au BufRead,BufNewFile * set ff=unix
 EOF
 
-    cat >> ~/.vimrc.bundles.local << EOF
+    cat >> ${HOME}/.vimrc.bundles.local << EOF
 " Odoo snippets {
 if count(g:spf13_bundle_groups, 'odoovim')
     Bundle 'vim-openerp'
@@ -262,12 +276,14 @@ endif
 " }
 EOF
 
-    cat >> ~/.vimrc.before.local << EOF
+    cat >> ${HOME}/.vimrc.before.local << EOF
 let g:spf13_bundle_groups = ['general', 'writing', 'odoovim', 'wakatime',
                            \ 'programming', 'youcompleteme', 'php', 'ruby',
                            \ 'python', 'javascript', 'html',
                            \ 'misc']
 EOF
+
+chown -R odoo:odoo ${HOME}/.vim*
 }
 
 configure_zsh(){
