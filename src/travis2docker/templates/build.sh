@@ -287,15 +287,16 @@ chown -R odoo:odoo ${HOME}/.vim*
 }
 
 configure_zsh(){
-    # TODO: Add arg to install zsh
-    # Call this method with "apt update" before
-    apt install -y zsh
-    wget -O /tmp/install_zsh.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh && \
-        chmod +x /tmp/install_zsh.sh
+    if [ -z ${ZSH_INSTALL+x} ];
+    then
+      echo "ZSH_INSTALL is not defined. Skipping zsh installation."
+      return 0;
+    fi
+    apt update && apt install -y zsh
+    wget -O /tmp/install_zsh.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    ZSH=${HOME}
     sh /tmp/install_zsh.sh "" --unattended
-    cp -r /root/.oh-my-zsh /home/odoo
     wget -O /home/odoo/.oh-my-zsh/themes/odoo-shippable.zsh-theme https://gist.githubusercontent.com/schminitz/9931af23bbb59e772eec/raw/cb524246fc93df242696bc3f502cababb03472ec/schminitz.zsh-theme
-    cp /root/.zshrc /home/odoo/.zshrc
     chown -R odoo:odoo /home/odoo/.oh-my-zsh /home/odoo/.zshrc
     sed -i 's/root/home\/odoo/g' /home/odoo/.zshrc
     sed -i 's/robbyrussell/odoo-shippable/g' /home/odoo/.zshrc
