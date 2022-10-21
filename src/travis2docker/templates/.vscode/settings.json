@@ -1,3 +1,11 @@
 {
-  "python.analysis.extraPaths": ["/home/odoo/instance/odoo"]
+  "editor.rulers": [120],
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 500,
+  "python.analysis.extraPaths": ["${env:HOME}/instance/odoo"],
+  "python.linting.enabled": true,
+  "pylint.args": ["--rcfile=${env:HOME}/.pylintrc"],
+  "flake8.args": ["--config", "${env:HOME}/.flake8"],
+  "isort.args": ["--settings-path", "${env:HOME}/.isort.cfg"],
+  "eslint.options": { "overrideConfigFile": "${env:HOME}/.eslintrc.json" }
 }
