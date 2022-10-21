@@ -23,7 +23,7 @@ Overview
     :alt: GitHub Actions Build Status
     :target: https://github.com/Vauxoo/travis2docker/actions
 
-.. |codecov| image:: https://codecov.io/gh/Vauxoo/travis2docker/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/Vauxoo/travis2docker/branch/main/graph/badge.svg
     :alt: Coverage Status
     :target: https://codecov.io/gh/Vauxoo/travis2docker
 
