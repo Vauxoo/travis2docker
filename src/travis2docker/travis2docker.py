@@ -103,10 +103,12 @@ class Travis2Docker(object):
             )
             docker_helper = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'docker_helper')
             vscode_conf = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', '.vscode')
+            coveragerc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates', '.coveragerc')
             copy_paths.append([build_sh, '/home/odoo/build.sh'])
             copy_paths.append([entrypoint_sh, '/entrypoint.sh'])
             copy_paths.append([docker_helper, '/home/odoo/build'])
             copy_paths.append([vscode_conf, '/home/odoo/.vscode'])
+            copy_paths.append([coveragerc, '/home/odoo/.coveragerc'])
         if image is None:
             image = 'vauxoo/odoo-80-image-shippable-auto'
         if os_kwargs is None:
