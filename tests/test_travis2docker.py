@@ -115,7 +115,7 @@ def test_main():
         assert ' PSQL_VERSION="9.5" ' in dkr_content
 
     url = 'https://github.com/Vauxoo/travis2docker.git'
-    sys.argv = ['travis2docker', url, 'master']
+    sys.argv = ['travis2docker', url, 'main']
     scripts = main()
     sources_py = "source ${REPO_REQUIREMENTS}/virtualenv/" + "python3.5/bin/activate"
     lines_required.pop(0)
