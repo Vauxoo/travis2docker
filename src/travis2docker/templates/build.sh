@@ -189,11 +189,12 @@ configure_vim(){
 
     if [ -z ${VIM_INSTALL+x} ];
     then
-      echo "VIM_INSTALL is not defined. Skipping vim installation."
+      echo "VIM_INSTALL is not defined. Skipping vim configuration (spf13 and other plugins). Use --build-ev-args=VIM_INSTALL for vim to be autoconfigured."
       return 0;
     fi
     # Upgrade & configure vim
     apt install vim --only-upgrade
+    apt install exuberant-ctags -y
     # Get vim version
     VIM_VERSION=$(dpkg -s vim | grep Version | sed -n 's/.*\([0-9]\+\.[0-9]\+\)\..*/\1/p' | sed -r 's/\.//g')
 
@@ -225,7 +226,7 @@ EOF
 
     # Install and configure YouCompleteMe
     VIM_YOUCOMPLETEME_PATH="${HOME}/.vim/bundle/YouCompleteMe"
-    git clone "https://github.com/Valloric/YouCompleteMe.git" ${VIM_YOUCOMPLETEME_PATH} -d 1
+    git clone "https://github.com/Valloric/YouCompleteMe.git" ${VIM_YOUCOMPLETEME_PATH} --depth 1
     # Install the custom version of YouCompleteMe because the last required g++ 4.9
     (cd "${VIM_YOUCOMPLETEME_PATH}" && git reset --hard c31152d34591f3211799ca1fe918eb78487e6dde && git submodule update --init --recursive && ./install.py)
     cat >> ${HOME}/.vimrc << EOF
