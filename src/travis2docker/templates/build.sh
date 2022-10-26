@@ -134,6 +134,12 @@ EOF
     chown -R odoo:odoo /home/odoo/.emacs.d
 }
 
+setup_coverage() {
+  echo "export MODULES2TEST=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "/%h,")" >> ${HOME}/.bashrc
+  echo "export MODULES2INSTALL=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "%h,")" >> ${HOME}/.bashrc
+}
+
+
 bash_colorized(){
     cat >> ~/.bashrc << 'EOF'
 Purple="\[\033[0;35m\]"

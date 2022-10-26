@@ -1,0 +1,39 @@
+[run]
+branch = True
+command_line =
+    ${HOME}/instance/odoo/odoo-bin -c ${ODOO_CONFIG_FILE} -d odoocov -i ${MODULES2INSTALL}
+    -u ${MODULES2INSTALL} --test-tags ${MODULES2TEST}  --workers 0 --stop-after-init
+relative_files = True
+source = ${COVERAGE_HOME}
+data_file = ${COVERAGE_HOME}/.coverage
+dynamic_context = ${COVERAGE_DYNAMIC_CONTEXT}
+omit =
+    */scenario/*
+    */scenarios/*
+    */test/*
+    */tests/*
+    */migrations/*
+    *migration*
+    *_example/*
+    *__init__.py
+    *__openerp__.py
+    *__manifest__.py
+    ${EXCLUDE_COVERAGE}
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    # Don't complain about null context checking
+    if context is None:
+    # Don't check obviously not implemented
+    raise NotImplementedError
+    # We don't really care what happens if fail
+    except ImportError:
+
+fail_under = ${COVERAGE_MIN-0}
+precision = ${COVERAGE_PRECISION-0}
+
+[html]
+show_contexts=True
