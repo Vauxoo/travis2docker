@@ -230,19 +230,8 @@ EOF
 let g:signify_disable_by_default = 1
 EOF
 
-    # Install and configure YouCompleteMe
-    VIM_YOUCOMPLETEME_PATH="${HOME}/.vim/bundle/YouCompleteMe"
-    git clone "https://github.com/Valloric/YouCompleteMe.git" ${VIM_YOUCOMPLETEME_PATH} --depth 1
-    # Install the custom version of YouCompleteMe because the last required g++ 4.9
-    (cd "${VIM_YOUCOMPLETEME_PATH}" && git reset --hard c31152d34591f3211799ca1fe918eb78487e6dde && git submodule update --init --recursive && ./install.py)
-    cat >> ${HOME}/.vimrc << EOF
-" Disable auto trigger for youcompleteme
-let g:ycm_auto_trigger = 0
-EOF
-
     # Install WakaTime
     git_clone_copy "https://github.com/wakatime/vim-wakatime.git" "master" "." "${HOME}/.vim/bundle/vim-wakatime"
-
     cat >> ${HOME}/.vimrc << EOF
 colorscheme heliotrope
 set colorcolumn=119
