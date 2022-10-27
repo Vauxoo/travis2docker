@@ -195,7 +195,7 @@ configure_vim(){
 
     if [ -z ${VIM_INSTALL+x} ];
     then
-      echo "VIM_INSTALL is not defined. Skipping vim configuration (spf13 and other plugins). Use --build-ev-args=VIM_INSTALL for vim to be autoconfigured."
+      echo "VIM_INSTALL was not defined. Skipping spf13-vim plugins. Use t2d parameter --build-env-args=VIM_INSTALL to be autoconfigured."
       return 0;
     fi
     # Upgrade & configure vim
