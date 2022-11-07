@@ -131,7 +131,6 @@ EOF
 
     # Configure emacs for odoo user
     git clone --depth 1 -b master https://github.com/Vauxoo/emacs.d.git /home/odoo/.emacs.d
-    chown -R odoo:odoo /home/odoo/.emacs.d
 }
 
 setup_coverage() {
@@ -283,8 +282,6 @@ let g:spf13_bundle_groups = ['general', 'writing', 'odoovim', 'wakatime',
                            \ 'python', 'javascript', 'html',
                            \ 'misc']
 EOF
-
-chown -R odoo:odoo ${HOME}/.vim*
 }
 
 configure_zsh(){
@@ -298,7 +295,6 @@ configure_zsh(){
     ZSH=${HOME}
     sh /tmp/install_zsh.sh "" --unattended
     wget -O /home/odoo/.oh-my-zsh/themes/odoo-shippable.zsh-theme https://gist.githubusercontent.com/schminitz/9931af23bbb59e772eec/raw/cb524246fc93df242696bc3f502cababb03472ec/schminitz.zsh-theme
-    chown -R odoo:odoo /home/odoo/.oh-my-zsh /home/odoo/.zshrc
     sed -i 's/root/home\/odoo/g' /home/odoo/.zshrc
     sed -i 's/robbyrussell/odoo-shippable/g' /home/odoo/.zshrc
     sed -i 's/^plugins=(/plugins=(\n  virtualenv\n/' /home/odoo/.zshrc
