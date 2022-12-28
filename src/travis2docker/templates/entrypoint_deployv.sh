@@ -58,7 +58,10 @@ def start_psql():
 def list_modules(modules_path):
     main_repo_path = os.environ["MAIN_REPO_FULL_PATH"]
     list_modules = []
+    excluded_modules = set([module.strip() for module in os.environ.get("EXCLUDE", "").split(",") if module.strip()])
     for i in os.listdir(main_repo_path):
+        if i in excluded_modules:
+          continue
         manifest = os.path.join(main_repo_path, i, "__manifest__.py")
         if os.path.isfile(manifest):
             manifest_data = eval(open(manifest).read())
