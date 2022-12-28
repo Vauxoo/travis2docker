@@ -20,8 +20,8 @@ def main():
 
 def check_failed_dockerfile(scripts, lines_required=None):
     npm_bin = which('npm')
-    npm_bin_path = subprocess.check_output([npm_bin, 'bin']).decode('UTF-8').strip('\n') if npm_bin else ""
-    npm_bin_path_g = subprocess.check_output([npm_bin, 'bin', '-g']).decode('UTF-8').strip('\n') if npm_bin else ""
+    npm_bin_path = subprocess.check_output([npm_bin, 'list']).decode('UTF-8').strip('\n') if npm_bin else ""
+    npm_bin_path_g = subprocess.check_output([npm_bin, 'list', '-g']).decode('UTF-8').strip('\n') if npm_bin else ""
     lint_bin_name = 'dockerfile_lint'
     lint_bin = which(lint_bin_name) or which(lint_bin_name, path=npm_bin_path + os.pathsep + npm_bin_path_g)
     assert lint_bin, "'%s' not found." % lint_bin_name
