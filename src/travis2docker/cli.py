@@ -217,13 +217,19 @@ def main(return_result=False):
         }
     else:
         os_kwargs = get_git_data(git_repo, join(root_path, 'repo'), revision)
+
     if travis_yml_path:
         yml_content = yml_read(travis_yml_path)
     else:
         yml_content = os_kwargs['content']
+
+    if not yml_content and os_kwargs.get("variables_sh"):
+        deployv = True
+        yml_content = "deployv: True"
+
     if not yml_content:
         msg = (
-            "The file %s is empty." % (travis_yml_path)
+            "The file %s is empty." % travis_yml_path
             if travis_yml_path
             else "The repo or the branch is incorrect value, because "
             + "It can not got the .travis.yml or variables.sh content from %s %s. " % (git_repo, revision)
@@ -232,6 +238,7 @@ def main(return_result=False):
             + "\nverify exists .travis.yml"
         )
         raise InvalidRepoBranchError(msg)
+
     os_kwargs.update({'add_self_rsa_pub': True, 'remotes': remotes, 'git_base': git_base})
     if docker_user:
         os_kwargs.update({'user': docker_user})
