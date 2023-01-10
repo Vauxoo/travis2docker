@@ -238,8 +238,7 @@ def main(return_result=False):
             + "\nverify exists .travis.yml"
         )
         raise InvalidRepoBranchError(msg)
-
-    os_kwargs.update({'add_self_rsa_pub': True, 'remotes': remotes, 'git_base': git_base})
+    os_kwargs.update({'remotes': remotes, 'git_base': git_base})
     if docker_user:
         os_kwargs.update({'user': docker_user})
     t2d = Travis2Docker(

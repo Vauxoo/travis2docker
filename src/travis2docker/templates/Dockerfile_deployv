@@ -13,10 +13,6 @@ RUN {% for src, dest in copies or [] -%} chown -R {{ user }}:{{ user }} {{dest}}
 {%- endfor -%}
 {%- endif %}
 
-{% if add_self_rsa_pub -%}
-RUN cat ${HOME}/.ssh/id_rsa.pub | tee -a ${HOME}/.ssh/authorized_keys
-{%- endif %}
-
 ENV ODOORC_DB_NAME=odoo ODOORC_PIDFILE=/home/odoo/.odoo.pid ODOORC_DATA_DIR=/home/odoo/data_dir PROFILE_FILE=/etc/bash.bashrc MAIN_REPO_FULL_PATH=/home/odoo/instance/$MAIN_REPO_PATH DEB_PYTHON_INSTALL_LAYOUT=deb
 ENV COVERAGE_RCFILE=$HOME/.coveragerc
 ENV COVERAGE_HOME=$MAIN_REPO_FULL_PATH
@@ -38,6 +34,7 @@ RUN . /home/odoo/build.sh && \
     configure_vim && \
     configure_zsh && \
     chown_all && \
+    set_authorized_keys && \
     mv /entrypoint_image /deployv_entrypoint_image && \
     mv /entry_point.py /deployv_entry_point.py
 
