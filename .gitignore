@@ -64,6 +64,8 @@ docs/_build
 *.bak
 
 # pre-commit-vauxoo
+.bandit*
+.config/
 .editorconfig
 .eslintrc*
 .flake8*
@@ -71,4 +73,6 @@ docs/_build
 .pre-commit*.yaml
 .prettierrc.yml
 .pylintrc*
+bandit*.yaml
+doc8.ini
 pyproject.toml
