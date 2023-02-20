@@ -7,6 +7,7 @@
 *.egg
 *.egg-info
 dist
+dist_wo_pbr
 build
 eggs
 .eggs
