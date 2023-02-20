@@ -5,3 +5,5 @@ six>=1.14.0
 tox
 # only to generate changelog based on git commits
 pbr
+twine
+wheel

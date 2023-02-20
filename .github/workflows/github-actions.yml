@@ -30,7 +30,7 @@ jobs:
             tox_env: "py,codecov"
           - python: '3.10'
             os: ubuntu-latest
-            tox_env: 'check,docs'
+            tox_env: 'check,docs,build'
         exclude:
           - python: '3.5'
             os: ubuntu-latest
@@ -67,15 +67,9 @@ jobs:
       run: |
         mkdir -p ~/.ssh
         tox -e ${{ matrix.tox_env }} -v
-    - name: Build a binary wheel and a source tarball
-      if: runner.os == 'Linux' && matrix.python == '3.9' && startsWith(matrix.tox_env, 'py')
-      run: |
-        python -m pip install build wheel twine
-        python -m build --sdist --wheel --outdir dist_wo_pbr/
-        python -m build --no-isolation --sdist --wheel --outdir dist/
-        twine check dist/*
+    # TODO: Publish package only for signed tags
     - name: Publish package
-      if: runner.os == 'Linux' && matrix.python == '3.9' && startsWith(matrix.tox_env, 'py') && startsWith(github.ref, 'refs/tags/v')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && contains(matrix.tox_env, 'build')
+      run: |
+        ls -lah dist/*
+        python -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
