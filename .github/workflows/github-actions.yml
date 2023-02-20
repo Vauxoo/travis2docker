@@ -75,11 +75,7 @@ jobs:
         python -m build --no-isolation --sdist --wheel --outdir dist/
         twine check dist/*
     - name: Publish package
-      if: |
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags') &&
-        runner.os == 'Linux' &&
-        matrix.python == '3.9' && startsWith(matrix.tox_env, 'py')
+      if: runner.os == 'Linux' && matrix.python == '3.9' && startsWith(matrix.tox_env, 'py') && startsWith(github.ref, 'refs/tags/v')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
