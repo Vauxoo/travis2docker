@@ -205,8 +205,6 @@ def main(return_result=False):
     runs_at_the_end_script = args.runs_at_the_end_script or None
     build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
     rcfiles = [(expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file))) for rc_file in rcfiles_args]
-    if not default_docker_image and not deployv:
-        default_docker_image = 'vauxoo/odoo-80-image-shippable-auto'
     if no_clone:
         os_kwargs = {
             'repo_owner': 'local_file',
@@ -226,6 +224,8 @@ def main(return_result=False):
     if not yml_content and os_kwargs.get("variables_sh"):
         deployv = True
         yml_content = "deployv: True"
+    if not default_docker_image and not deployv:
+        default_docker_image = 'vauxoo/odoo-80-image-shippable-auto'
 
     if not yml_content:
         msg = (
