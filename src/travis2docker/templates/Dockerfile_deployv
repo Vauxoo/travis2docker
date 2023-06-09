@@ -36,7 +36,8 @@ RUN . /home/odoo/build.sh && \
     chown_all && \
     set_authorized_keys && \
     mv /entrypoint_image /deployv_entrypoint_image && \
-    mv /entry_point.py /deployv_entry_point.py
+    mv /entry_point.py /deployv_entry_point.py && \
+    mkdir /run/sshd
 
 
 USER {{ user }}

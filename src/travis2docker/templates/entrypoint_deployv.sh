@@ -5,10 +5,13 @@ from __future__ import print_function
 import os
 import subprocess
 import time
+import pwd
 
 
 def start_psql():
     # Start postgresql service
+    if not str2bool(os.environ.get("START_PSQL", True)):
+        return
     cmd = "/etc/init.d/postgresql start "
     subprocess.Popen(
         cmd, shell=True, env=os.environ, stdin=None, stdout=None, stderr=None
@@ -71,11 +74,17 @@ def list_modules(modules_path):
     return list_modules
 
 
+def is_root():
+    return pwd.getpwuid(os.getuid())[0] == "root"
+
+
 def str2bool(string):
     return str(string or "").lower() in ["1", "true", "yes"]
 
 
 def start_odoo():
+    if not str2bool(os.environ.get("START_ODOO", True)):
+        return
     modules = list_modules(os.environ["MAIN_REPO_FULL_PATH"])
     test_enable = str2bool(os.environ.get("TEST_ENABLE", True))
     cmd = ["/home/odoo/instance/odoo/odoo-bin"]
@@ -85,6 +94,10 @@ def start_odoo():
         "-XtAc",
         "SELECT 1 FROM res_users LIMIT 1;",
     ]
+    if is_root():
+        cmd = ["sudo", "-u", "odoo"] + cmd
+        psql_cmd = ["sudo", "-u", "postgres"] + psql_cmd
+
     try:
         subprocess.check_output(psql_cmd)
         database_created = True
@@ -101,6 +114,12 @@ def start_odoo():
     subprocess.call(cmd)
 
 
+def start_ssh():
+    if str2bool(os.environ.get("START_SSH")) and is_root():
+        subprocess.call("/etc/init.d/ssh start", shell=True)
+
+
 if __name__ == "__main__":
+    start_ssh()
     start_psql()
     start_odoo()
