@@ -103,18 +103,10 @@ install_dev_tools(){
         py-spy \
         virtualenv \
         ipdb \
-        pre-commit-vauxoo \
         diff-highlight \
         pg-activity \
         nodeenv \
         pdbpp
-
-    # Symlinks used by vscode and possibly other tools.
-    PCV_DIR="$(python3 -c "import pre_commit_vauxoo as pcv; print(pcv.__path__[0])")/cfg"
-    ln -sf "${PCV_DIR}/.pylintrc" "${HOME}/.pylintrc"
-    ln -sf "${PCV_DIR}/.flake8" "${HOME}/.flake8"
-    ln -sf "${PCV_DIR}/.isort.cfg" "${HOME}/.isort.cfg"
-    ln -sf "${PCV_DIR}/.eslintrc.json" "${HOME}/.eslintrc.json"
 
     # pre install pre-commit-vauxoo?
     # sudo su odoo -c "git init /tmp/test && cd /tmp/test && pre-commit-vauxoo -f"
@@ -151,6 +143,28 @@ EOF
 
     # Configure emacs for odoo user
     git clone --depth 1 -b master https://github.com/Vauxoo/emacs.d.git /home/odoo/.emacs.d
+}
+
+# Ensure pre-commit-vauxoo is installed on python3.8
+install_pcv() {
+    [[ $(python3 --version) =~ [0-9]\.([0-9]+) ]]
+
+    if ! [[ ${BASH_REMATCH[1]} -lt 7 ]]; then
+        printf "INFO: Using python <= 3.7, installing python3.8 for pcv\n"
+        PYTHON=python3.8
+        apt install ${PYTHON} -y
+        curl -sSL https://bootstrap.pypa.io/get-pip.py | ${PYTHON} -
+    else
+        PYTHON=python3
+    fi
+    ${PYTHON} -m pip install pre-commit-vauxoo
+
+    # Symlinks used by vscode and possibly other tools.
+    PCV_DIR="$(${PYTHON} -c "import pre_commit_vauxoo as pcv; print(pcv.__path__[0])")/cfg"
+    ln -sf "${PCV_DIR}/.pylintrc" "${HOME}/.pylintrc"
+    ln -sf "${PCV_DIR}/.flake8" "${HOME}/.flake8"
+    ln -sf "${PCV_DIR}/.isort.cfg" "${HOME}/.isort.cfg"
+    ln -sf "${PCV_DIR}/.eslintrc.json" "${HOME}/.eslintrc.json"
 }
 
 setup_coverage() {
