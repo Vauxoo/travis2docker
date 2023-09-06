@@ -50,7 +50,7 @@ jobs:
     - name: install dependencies
       run: |
         pip install --upgrade pip
-        python -mpip install --progress-bar=off -r ci/requirements.txt
+        python -mpip install --progress-bar=off -r requirements-dev.txt
         virtualenv --version
         pip --version
         tox --version
