@@ -33,7 +33,13 @@ jobs:
           # Run additional tox-env only for one environment
           - python: '3.10'
             os: ubuntu-latest
-            tox_env: 'check,docs,build'
+            tox_env: 'check'
+          - python: '3.10'
+            os: ubuntu-latest
+            tox_env: 'docs'
+          - python: '3.10'
+            os: ubuntu-latest
+            tox_env: 'build'
         exclude:
           # The version '3.5' with architecture 'x64' was not found for Ubuntu 22.04
           - python: '3.5'
