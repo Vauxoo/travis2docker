@@ -18,19 +18,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.5', '3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
+        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ["py,codecov"]
         include:
-          # The version '3.5' with architecture 'x64' was not found for Ubuntu 22.04
-          - python: '3.5'
-            os: ubuntu-20.04
-            tox_env: "py,codecov"
-          # The version '3.6' with architecture 'x64' was not found for Ubuntu 22.04.
-          - python: '3.6'
-            os: ubuntu-20.04
-            tox_env: "py,codecov"
-          # Run additional tox-env only for one environment
           - python: '3.10'
             os: ubuntu-latest
             tox_env: 'check'
@@ -40,16 +31,6 @@ jobs:
           - python: '3.10'
             os: ubuntu-latest
             tox_env: 'build'
-        exclude:
-          # The version '3.5' with architecture 'x64' was not found for Ubuntu 22.04
-          - python: '3.5'
-            os: ubuntu-latest
-          # The version '3.6' with architecture 'x64' was not found for Ubuntu 22.04.
-          - python: '3.6'
-            os: ubuntu-latest
-          # No Python3.5.* found
-          - python: '3.5'
-            os: windows-latest
     steps:
     - uses: actions/checkout@v3
       with:
