@@ -77,6 +77,7 @@ class Travis2Docker(object):
         runs_at_the_end_script=None,
         build_env_args=None,
         deployv=None,
+        build_extra_steps=None,
     ):
         self._python_versions = []
         self.curr_work_path = None
@@ -87,6 +88,7 @@ class Travis2Docker(object):
         self.deployv = deployv
         self.runs_at_the_end_script = ["sleep 2"] if runs_at_the_end_script is None else runs_at_the_end_script
         self.variables_sh_data = {}
+        self.build_extra_steps = build_extra_steps
         if deployv:
             self.variables_sh_data = {
                 var.lower(): value for _, _, var, value in self.re_export.findall(os_kwargs['variables_sh'])
@@ -316,6 +318,7 @@ class Travis2Docker(object):
                         'sources': [],
                         'rvm_env_path': rvm_env_relpath,
                         'build_env_args': self.build_env_args,
+                        'build_extra_steps': self.build_extra_steps,
                     }
                     with open(curr_dockerfile, "w") as f_dockerfile, open(entryp_path, "w") as f_entrypoint, open(
                         rvm_env_path, "w"

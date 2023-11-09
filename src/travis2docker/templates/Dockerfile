@@ -39,6 +39,10 @@ RUN apt-get update; apt-get install {{ ' '.join(packages) }}
 
 RUN echo "TRAVIS_PYTHON_VERSION={{ python_version }}" >> /etc/environment
 
+{% for step in build_extra_steps %}
+RUN {{ step }}
+{% endfor %}
+
 USER {{ user }}
 ENV TRAVIS_PYTHON_VERSION={{ python_version }}
 ENV TRAVIS_REPO_SLUG={{ repo_owner }}/{{ repo_project }}

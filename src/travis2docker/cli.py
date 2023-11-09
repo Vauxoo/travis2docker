@@ -184,6 +184,13 @@ def main(return_result=False):
         default=False,
         help='Use the image generated from the CI and used in deployV',
     )
+    parser.add_argument(
+        '--build-extra-steps',
+        nargs='*',
+        default="",
+        dest='build_extra_steps',
+        help='Append these extra steps at the end of the Dockerfile',
+    )
 
     args = parser.parse_args()
     revision = args.git_revision
@@ -250,6 +257,7 @@ def main(return_result=False):
         runs_at_the_end_script=runs_at_the_end_script,
         build_env_args=build_env_args,
         deployv=deployv,
+        build_extra_steps=args.build_extra_steps,
     )
     t2d.build_extra_params = {
         'extra_params': build_extra_args,
