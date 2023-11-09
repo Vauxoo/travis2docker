@@ -39,6 +39,9 @@ RUN . /home/odoo/build.sh && \
     mv /entry_point.py /deployv_entry_point.py && \
     mkdir /run/sshd
 
+{% for step in build_extra_steps %}
+RUN {{ step }}
+{% endfor %}
 
 USER {{ user }}
 
