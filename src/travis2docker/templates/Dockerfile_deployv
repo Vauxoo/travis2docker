@@ -34,7 +34,6 @@ RUN . /home/odoo/build.sh && \
     configure_vim && \
     configure_zsh && \
     chown_all && \
-    set_authorized_keys && \
     mv /entrypoint_image /deployv_entrypoint_image && \
     mv /entry_point.py /deployv_entry_point.py && \
     mkdir /run/sshd
