@@ -306,6 +306,7 @@ class Travis2Docker(object):
                     copies = []
                     for copy_path, dest in self.copy_paths:
                         copies.append((self.copy_path(copy_path), dest))
+                    self.set_authorized_key()
                     kwargs = {
                         'runs': [],
                         'copies': copies,
@@ -381,3 +382,25 @@ class Travis2Docker(object):
         else:
             raise UserWarning("Just directory or file is supported to copy [%s]" % src)
         return os.path.relpath(dest_path, self.curr_work_path)
+
+    def set_authorized_key(self):
+        ssh_dir = os.path.expanduser("~/.ssh")
+        ed_key = os.path.join(ssh_dir, "id_ed25519.pub")
+        rsa_key = os.path.join(ssh_dir, "id_rsa.pub")
+
+        to_copy = False
+        if os.path.isfile(ed_key):
+            to_copy = ed_key
+        elif os.path.isfile(rsa_key):
+            print("RSA keys are deprecated, consider changing to ed25519")
+            to_copy = rsa_key
+
+        if not to_copy:
+            print("No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work.")
+            return
+
+        with open(to_copy, "r", encoding="utf-8") as key_fd:
+            pub_key = key_fd.read()
+
+        with open(os.path.join(self.curr_work_path, ".ssh", "authorized_keys"), "w", encoding="utf-8") as auth_fd:
+            auth_fd.write(pub_key)

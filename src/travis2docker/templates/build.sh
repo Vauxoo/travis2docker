@@ -55,26 +55,6 @@ EOF
     # alias odoo
 }
 
-set_authorized_keys(){
-    YELLOW='\033[0;33m'
-    NC='\033[0m'
-
-    AUTH_FILE="${HOME}/.ssh/authorized_keys"
-    ED_KEY="${HOME}/.ssh/id_ed25519.pub"
-    RSA_KEY="${HOME}/.ssh/id_rsa.pub"
-
-    echo "INFO: Adding public key to ~/.ssh/authorized_keys"
-    if [ -f "${ED_KEY}" ]; then
-        tee -a "${AUTH_FILE}" < "${ED_KEY}"
-    elif [ -f "${RSA_KEY}" ]; then
-        printf "${YELLOW}WARNING: RSA keys are deprecated, consider changing to ed25519\n${NC}"
-        tee -a "${AUTH_FILE}" < "${RSA_KEY}"
-    else
-        echo "INFO: No public key found. No key added to ~/.ssh/authorized_keys"
-    fi
-}
-
-
 # You can add new packages here
 install_dev_tools(){
     apt update -qq
