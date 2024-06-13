@@ -94,7 +94,7 @@ def main(return_result=False):
     parser.add_argument(
         '--root-path',
         dest='root_path',
-        help="Root path to save scripts generated." "\nDefault: 'tmp' dir of your O.S.",
+        help=f"Root path to save scripts generated.\nDefault: {default_root_path}",
         default=default_root_path,
     )
     parser.add_argument(
