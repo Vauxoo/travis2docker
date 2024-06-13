@@ -19,9 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         python: ['3.7', '3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-13]
         tox_env: ["py,codecov"]
         include:
+          - python: '3.11'
+            os: macos-latest
+            tox_env: 'py,codecov'
           - python: '3.10'
             os: ubuntu-latest
             tox_env: 'check'
