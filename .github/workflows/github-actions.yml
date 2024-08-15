@@ -18,22 +18,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-latest, windows-latest, macos-13]
+        python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         tox_env: ["py,codecov"]
         include:
-          - python: '3.11'
-            os: macos-latest
-            tox_env: 'py,codecov'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'check'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'docs'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'build'
+        exclude:
+          # macos-14 AKA macos-latest has switched to being an ARM runner, only supporting newer versions of Python
+          # https://github.com/actions/setup-python/issues/825#issuecomment-2096792396
+          - python: '3.7'
+            os: macos-latest
+          - python: '3.8'
+            os: macos-latest
+          - python: '3.9'
+            os: macos-latest
+          - python: '3.10'
+            os: macos-latest
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -46,10 +55,10 @@ jobs:
         cache: 'pip'
     - name: Cache pre-commit packages
       id: cache-pre-commit
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
-        key: ${{ runner.os }}-py${{ matrix.python }}-pre-commit
+        key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
     - name: install dependencies
       run: |
         pip install --upgrade pip
