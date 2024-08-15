@@ -1,9 +1,10 @@
-virtualenv>=16.6.0
+build
+bump2version
+pbr  # only to generate changelog based on git commits
 pip>=19.1.1
-setuptools>=18.0.1
+setuptools >=42
 six>=1.14.0
 tox
-# only to generate changelog based on git commits
-pbr
 twine
+virtualenv>=16.6.0
 wheel
