@@ -78,7 +78,7 @@ install_dev_tools(){
         # emacs \
         # byobu \
         # multitail  # Set the terminal with red letters build the docker
-    sudo pip install -q \
+    sudo -E pip install -q \
         ipython \
         py-spy \
         virtualenv \
@@ -99,7 +99,7 @@ install_dev_tools(){
     # pre install pre-commit-vauxoo?
     # sudo su odoo -c "git init /tmp/test && cd /tmp/test && pre-commit-vauxoo -f"
     touch /home/odoo/full_test-requirements.txt
-    sudo pip install -r /home/odoo/full_test-requirements.txt
+    sudo -E pip install -r /home/odoo/full_test-requirements.txt
 
     # Keep alive the ssh server
     #   60 seconds * 360 = 21600 seconds = 6 hours
