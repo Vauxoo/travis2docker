@@ -131,6 +131,12 @@ EOF
 
     # Configure emacs for odoo user
     git clone --depth 1 -b master https://github.com/Vauxoo/emacs.d.git /home/odoo/.emacs.d
+
+    # Install pgvector for "ai" odoo-18.4+ module
+    VERSIONS=$(pg_lsclusters  | sed '1d' | awk '{print $1}' )
+    for version in $VERSIONS; do
+        apt install -y postgresql-$version-pgvector
+    done
 }
 
 setup_coverage() {
