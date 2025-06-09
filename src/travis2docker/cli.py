@@ -42,11 +42,12 @@ def get_git_data(project, path, revision):
 
 def yml_read(yml_path):
     yml_path_expanded = expandvars(expanduser(yml_path))
+    alt_yml_path_expanded = None
     if isdir(yml_path_expanded):
         yml_path_expanded = join(yml_path_expanded, '.travis.yml')
         alt_yml_path_expanded = join(yml_path_expanded, '.t2d.yml')
     if not isfile(yml_path_expanded):
-        if isfile(alt_yml_path_expanded):
+        if alt_yml_path_expanded and isfile(alt_yml_path_expanded):
             yml_path_expanded = alt_yml_path_expanded
         else:
             return
