@@ -224,7 +224,7 @@ configure_vim(){
     # Get vim version
     VIM_VERSION=$(dpkg -s vim | grep Version | sed -n 's/.*\([0-9]\+\.[0-9]\+\)\..*/\1/p' | sed -r 's/\.//g')
 
-    wget -q -O /usr/share/vim/vim${VIM_VERSION}/spell/es.utf-8.spl http://ftp.vim.org/pub/vim/runtime/spell/es.utf-8.spl
+    wget -q -O /usr/share/vim/vim${VIM_VERSION}/spell/es.utf-8.spl https://ftp.nluug.nl/pub/vim/runtime/spell/es.utf-8.spl
     wget -O  - https://raw.githubusercontent.com/spf13/spf13-vim/3.0/bootstrap.sh | sh
     git_clone_copy "https://github.com/vauxoo/vim-openerp.git" "master" "vim/" "${HOME}/.vim/bundle/vim-openerp"
     git_clone_copy "https://github.com/davidhalter/jedi-vim.git" "master" "." "${HOME}/.vim/bundle/jedi-vim"
