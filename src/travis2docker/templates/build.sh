@@ -28,8 +28,23 @@ install_pgcli_venv(){
 }
 
 odoo_conf(){
-    export ODOO_CONF=/home/odoo/.openerp_serverrc
-    /entry_point.py run true
+    if [ -f "/home/odoo/.odoorc" ]; then
+        export ODOO_CONF="/home/odoo/.odoorc"
+    elif [ -f "/home/odoo/.openerp_serverrc" ]; then
+        export ODOO_CONF="/home/odoo/.openerp_serverrc"
+    else
+        echo "❌ Odoo configuration file not found."
+        exit 1
+    fi
+    if [ -x "/entrypoint" ]; then
+        export ENTRYPOINT="/entrypoint"
+    elif [ -x "/entry_point.py" ]; then
+        export ENTRYPOINT="/entry_point.py"
+    else
+        echo "❌ Orchest entrypoint not found"
+        exit 1
+    fi
+    $ENTRYPOINT run true
     sed -i '/db_host\|db_password\|db_user\|workers\|list_db/d' $ODOO_CONF
     su odoo -c "mkdir -p $ODOORC_DATA_DIR"
 }
