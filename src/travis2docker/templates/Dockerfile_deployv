@@ -36,6 +36,7 @@ RUN . /home/odoo/build.sh && \
     chown_all && \
     [ -e /entrypoint_image ] && mv /entrypoint_image /deployv_entrypoint_image ; \
     [ -e /entry_point.py ] && mv /entry_point.py /deployv_entry_point.py ; \
+    [ -e /entrypoint ] && mv /entrypoint /deployv_entrypoint ; \
     mkdir -p /run/sshd
 
 {% for step in build_extra_steps %}
