@@ -3,9 +3,29 @@
 from __future__ import print_function
 
 import os
+import sys
 import subprocess
 import time
 import pwd
+
+
+def fix_permissions():
+    """Fix file permissions into the HOME directory of the odoo user.
+
+    Since the parent image marks some directories as volumes (e.g. ~/.ssh), permissions can't be fixed during
+    build.
+    """
+    if not is_root():
+        return
+    print("* Fixing file permissions...")
+    chown_cmd = [
+        "find",
+        "/home/odoo",
+        "-maxdepth", "1",
+        "-not", "-user", "odoo",
+        "-exec", "chown", "-Rv", "odoo:odoo", "{}", "+",
+    ]
+    result = subprocess.run(chown_cmd)
 
 
 def start_psql():
@@ -82,6 +102,10 @@ def str2bool(string):
     return str(string or "").lower() in ["1", "true", "yes"]
 
 
+def cmd_as_user(cmd, user):
+    return ["sudo", "-u", user] + cmd
+
+
 def start_odoo():
     if not str2bool(os.environ.get("START_ODOO", True)):
         return
@@ -95,8 +119,8 @@ def start_odoo():
         "SELECT 1 FROM res_users LIMIT 1;",
     ]
     if is_root():
-        cmd = ["sudo", "-u", "odoo"] + cmd
-        psql_cmd = ["sudo", "-u", "postgres"] + psql_cmd
+        cmd = cmd_as_user(cmd, "odoo")
+        psql_cmd = cmd_as_user(psql_cmd, "postgres")
 
     try:
         subprocess.check_output(psql_cmd)
@@ -119,7 +143,18 @@ def start_ssh():
         subprocess.call("/etc/init.d/ssh start", shell=True)
 
 
+def start_bash():
+    # Start bash only if it's run as a docker entrypoint (not by the user) and Odoo was asked to don't start
+    if "--docker" not in sys.argv or str2bool(os.environ.get("START_ODOO", True)):
+        return
+    print("Starting shell")
+    cmd_bash = ["su", "odoo"] if is_root() else ["bash"]
+    os.execvp(cmd_bash[0], cmd_bash)
+
+
 if __name__ == "__main__":
+    fix_permissions()
     start_ssh()
     start_psql()
     start_odoo()
+    start_bash()

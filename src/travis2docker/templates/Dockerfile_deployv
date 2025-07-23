@@ -2,8 +2,6 @@ FROM {{ image  }}
 
 ARG HOME=/home/odoo
 
-# rm -rf /home/odoo/.ssh
-
 {%- for src, dest in copies or [] %}
 COPY {{ src }} {{ dest }}
 {% endfor -%}
@@ -43,10 +41,8 @@ RUN . /home/odoo/build.sh && \
 RUN {{ step }}
 {% endfor %}
 
-USER {{ user }}
-
 # TODO: Use .profile as bash profiler by default
 
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh", "--docker"]
 
 WORKDIR $MAIN_REPO_FULL_PATH
