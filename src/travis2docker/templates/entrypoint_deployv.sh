@@ -104,6 +104,14 @@ def start_odoo():
     except subprocess.CalledProcessError:
         database_created = False
 
+    configpy = "/home/odoo/instance/odoo/odoo/tools/config.py"
+    if os.path.isfile(configpy):
+        with open(configpy) as f_configpy:
+            for line in f_configpy:
+                if "--with-demo" in line:
+                    cmd.extend(["--with-demo"])
+                    break
+
     if not database_created:
         cmd.extend(["-i", ",".join(modules), "--workers=0", "--stop-after-init"])
         if test_enable:
