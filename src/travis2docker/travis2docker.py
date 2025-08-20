@@ -402,5 +402,5 @@ class Travis2Docker(object):
         with open(to_copy, "r", encoding="utf-8") as key_fd:
             pub_key = key_fd.read()
 
-        with open(os.path.join(self.curr_work_path, ".ssh", "authorized_keys"), "w", encoding="utf-8") as auth_fd:
+        with open(os.path.join(self.curr_work_path, ".ssh", "authorized_keys"), "a", encoding="utf-8") as auth_fd:
             auth_fd.write(pub_key)
