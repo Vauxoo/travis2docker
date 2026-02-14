@@ -321,7 +321,7 @@ def main(return_result=False):
     deployv = args.deployv
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(',')
     runs_at_the_end_script = args.runs_at_the_end_script or None
-    build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
+    build_env_args = [arg for sublist in args.build_env_args for arg in sublist]
     rcfiles = [(expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file))) for rc_file in rcfiles_args]
     if no_clone:
         os_kwargs = {
