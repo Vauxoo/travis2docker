@@ -1,4 +1,4 @@
 #!/bin/bash
-export IMAGE={{ image }}
-docker run {{ extra_params }} $1 -itP $IMAGE $2
+IMAGE={{ image }}
+docker run {{ extra_params }} $IMAGE /entrypoint.sh
 {{ extra_cmds }}

@@ -68,31 +68,35 @@ Usage
 =====
 
 `travisfile2dockerfile REPO_URL BRANCH`
- 
+
 Or with pull request
  `travisfile2dockerfile REPO_URL pull/##`
- 
-In REPO_URL use the ssh url of github.
+
+In REPO_URL use the ssh or https url of the git repository.
+
+The tool reads the ``.travis.yml`` (or ``.t2d.yml``) file from the repository and
+branch specified, generating Dockerfiles and helper scripts.
 
 For more information execute:
  `travisfile2dockerfile --help`
- 
+
 Example:
  `travisfile2dockerfile --root-path=$HOME/t2d git@github.com:Vauxoo/forecast.git 8.0`
 
 The output is:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1`
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2_7/env_1_job_1`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2_7/env_2_job_1`
 
-The first one is the build for env `TESTS=1`, the second one is for env with `LINT_CHECK=1`
+Where ``2_7`` is the Python version (dots replaced by underscores), and
+``env_N_job_M`` identifies the environment/job matrix combination.
 
 To build image:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1/10-build.sh`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2_7/env_1_job_1/10-build.sh`
 
 To create container:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1/20-run.sh --entrypoint=bash`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2_7/env_1_job_1/20-run.sh --entrypoint=bash`
 
-To run the test (into of container):
+To run the test (inside of container):
  `/entrypoint.sh`
 
 Depends
@@ -102,6 +106,16 @@ SSH key without password
 ************************
 
 Dockerfile doesn't support a prompt to enter your password, so you need to remove it from your ssh keys.
+
+Recommended: use Ed25519 keys (the tool will warn if only RSA is found).
+
+::
+
+  export fname=~/.ssh/id_ed25519
+  cp ${fname} ${fname}_with_pwd
+  ssh-keygen -p -N "" -f ${fname}
+
+For legacy RSA keys:
 
 ::
 
@@ -114,6 +128,8 @@ Download the big image
 **********************
 
 Travis2docker uses a default image with many packages pre-installed.
+The ``10-build.sh`` script uses ``docker build --pull`` which will fetch the
+image automatically, but you can pre-download it:
 
 `docker pull vauxoo/odoo-80-image-shippable-auto`
 

@@ -56,38 +56,71 @@ def yml_read(yml_path):
 
 
 def main(return_result=False):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog='travisfile2dockerfile',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            'travis2docker (t2d) — Generate Dockerfiles from Travis CI configuration.\n'
+            '\n'
+            'Clones a git repository, reads its .travis.yml (or .t2d.yml) file,\n'
+            'and generates a set of Dockerfile and helper scripts that reproduce\n'
+            'the Travis CI build environment locally using Docker.'
+        ),
+        epilog=(
+            'examples:\n'
+            '  %(prog)s git@github.com:org/repo.git 12.0\n'
+            '  %(prog)s git@github.com:org/repo.git pull/42\n'
+            '  %(prog)s --no-clone --travis-yml-path ./my.travis.yml . dummy\n'
+            '  %(prog)s --deployv --docker-image quay.io/vauxoo/proj:tag git@github.com:org/repo.git 16.0\n'
+            '\n'
+            'environment variables:\n'
+            '  TRAVIS2DOCKER_ROOT_PATH   Override the default root path (~) where\n'
+            '                            the .t2d working directory is created.\n'
+        ),
+    )
+
+    # ── Positional arguments ─────────────────────────────────────────
     parser.add_argument(
         "git_repo_url",
-        help="Specify repository git of work."
-        "\nThis is used to clone it "
-        "and get file .travis.yml or .shippable.yml"
-        "\nIf your repository is private, "
-        "don't use https url, "
-        "use ssh url",
+        help=(
+            'Git URL of the repository to process.\n'
+            'The repo is cloned locally to extract .travis.yml or .t2d.yml.\n'
+            'For private repositories use SSH URLs (git@...) instead of HTTPS.'
+        ),
     )
     parser.add_argument(
         "git_revision",
-        help="Revision git of work."
-        "\nYou can use "
-        "branch name e.g. master or 8.0 "
-        "or pull number with 'pull/#' e.g. pull/1 "
-        "NOTE: A sha e.g. b48228 NOT IMPLEMENTED YET",
+        help=(
+            'Git revision to build. Accepts:\n'
+            '  - Branch name   : master, 14.0, 16.0\n'
+            '  - Pull request  : pull/123\n'
+            'Note: raw SHA references are not supported yet.'
+        ),
     )
+
+    # ── Docker options ───────────────────────────────────────────────
     parser.add_argument(
         '--docker-user',
         dest='docker_user',
-        help="User of work into Dockerfile." "\nBased on your docker image." "\nDefault: root",
+        help=(
+            'Unix user that will run commands inside the container.\n'
+            'Must match a user present in the base Docker image.\n'
+            '(default: root)'
+        ),
     )
     parser.add_argument(
         '--docker-image',
         dest='default_docker_image',
-        help="Docker image to use by default in Dockerfile."
-        "\nUse this parameter if don't "
-        "exists value: 'build_image: IMAGE_NAME' "
-        "in .travis.yml"
-        "\nDefault: 'vauxoo/odoo-80-image-shippable-auto'",
+        help=(
+            'Base Docker image for the generated Dockerfile.\n'
+            'Only needed when .travis.yml does not specify build_image.\n'
+            'NOTE: the current default is a legacy Odoo 8.0 image; you\n'
+            'likely want to override it for modern projects.\n'
+            '(default: vauxoo/odoo-80-image-shippable-auto)'
+        ),
     )
+
+    # ── Paths and files ──────────────────────────────────────────────
     default_root_path = os.environ.get('TRAVIS2DOCKER_ROOT_PATH')
     if not default_root_path:
         default_root_path = os.path.expanduser("~")
@@ -95,76 +128,132 @@ def main(return_result=False):
     parser.add_argument(
         '--root-path',
         dest='root_path',
-        help=f"Root path to save scripts generated.\nDefault: {default_root_path}",
         default=default_root_path,
+        help=(
+            'Root directory where all generated scripts and cloned repos\n'
+            'are stored. Sub-directories "repo/" and "script/" are created\n'
+            'inside this path automatically.\n'
+            f'(default: {default_root_path})'
+        ),
     )
+    parser.add_argument(
+        '--travis-yml-path',
+        dest='travis_yml_path',
+        default=None,
+        help=(
+            'Use a local .travis.yml (or .t2d.yml) file instead of\n'
+            'extracting it from the cloned repository.\n'
+            'Accepts a file path or a directory containing .travis.yml.\n'
+            '(default: extracted from git_repo_url at git_revision)'
+        ),
+    )
+    parser.add_argument(
+        '--add-rcfile',
+        dest='add_rcfile',
+        default="",
+        help=(
+            'Comma-separated list of configuration file paths (e.g. .pylintrc,\n'
+            '.flake8) to copy into the container user\'s $HOME directory.\n'
+            'Paths are expanded with ~ notation.\n'
+            '(default: none)'
+        ),
+    )
+
+    # ── Git options ──────────────────────────────────────────────────
     parser.add_argument(
         '--add-remote',
         dest='remotes',
-        help='Add git remote to git of build path, separated by a comma.' "\nUse remote name. E.g. 'Vauxoo,moylop260'",
+        help=(
+            'Comma-separated list of GitHub user/org names to add as git\n'
+            'remotes in the build directory.\n'
+            'Example: --add-remote Vauxoo,moylop260\n'
+            '(default: none)'
+        ),
     )
+    parser.add_argument(
+        '--no-clone',
+        dest='no_clone',
+        action='store_true',
+        default=False,
+        help=(
+            'Skip cloning the repository. When active, you must also\n'
+            'provide --travis-yml-path pointing to a local CI config file.\n'
+            'Useful for testing local .travis.yml changes without pushing.\n'
+            '(default: False)'
+        ),
+    )
+
+    # ── Travis CI section control ────────────────────────────────────
     parser.add_argument(
         '--exclude-after-success',
         dest='exclude_after_success',
         action='store_true',
         default=False,
-        help='Exclude `travis_after_success` section to entrypoint',
+        help=(
+            'Exclude the after_success section from the generated\n'
+            'entrypoint script. Useful to skip steps like coverage\n'
+            'uploads or deployment triggers during local testing.\n'
+            '(default: False)'
+        ),
     )
+
+    # ── docker run customization ─────────────────────────────────────
     parser.add_argument(
         '--run-extra-args',
         dest='run_extra_args',
-        help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
         default='-itP -e LANG=C.UTF-8',
+        help=(
+            'Extra flags appended to the "docker run" command.\n'
+            '(default: "-itP -e LANG=C.UTF-8")'
+        ),
     )
     parser.add_argument(
         '--run-extra-cmds',
         dest='run_extra_cmds',
         nargs='*',
         default="",
-        help='Extra commands to run after "run" script. '
-        'Note: You can use \\$IMAGE escaped environment variable.'
-        'E.g. "docker rmi -f \\$IMAGE"',
+        help=(
+            'Commands to execute after the generated "run" script.\n'
+            'You can reference the built image via the escaped\n'
+            'variable \\$IMAGE.\n'
+            'Example: --run-extra-cmds "docker rmi -f \\$IMAGE"\n'
+            '(default: none)'
+        ),
     )
+
+    # ── docker build customization ───────────────────────────────────
     parser.add_argument(
         '--build-extra-args',
         dest='build_extra_args',
-        help="Extra arguments to `docker build BUILD_EXTRA_ARGS` command",
         default='--rm',
+        help=(
+            'Extra flags appended to the "docker build" command.\n'
+            '(default: "--rm")'
+        ),
     )
     parser.add_argument(
         '--build-extra-cmds',
         dest='build_extra_cmds',
         nargs='*',
         default="",
-        help='Extra commands to run after "build" script. ' 'Note: You can use \\$IMAGE escaped environment variable.',
+        help=(
+            'Commands to execute after the generated "build" script.\n'
+            'You can reference the built image via the escaped\n'
+            'variable \\$IMAGE.\n'
+            '(default: none)'
+        ),
     )
     parser.add_argument(
-        '--travis-yml-path',
-        dest='travis_yml_path',
-        help="Optional path of file .travis.yml to use.\n" "Default: Extracted from git repo and git revision.",
-        default=None,
-    )
-    parser.add_argument(
-        '--no-clone',
-        dest='no_clone',
-        action='store_true',
-        help="Avoid clone the repository. It will require travis-yml-path",
-        default=False,
-    )
-    parser.add_argument(
-        '--add-rcfile',
-        dest='add_rcfile',
-        default="",
-        help='Optional paths of configuration files to '
-        'copy for user\'s HOME path into container, separated by a comma.',
-    )
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
-    parser.add_argument(
-        '--runs-at-the-end-script',
-        dest='runs_at_the_end_script',
+        '--build-extra-steps',
         nargs='*',
         default="",
-        help='Extra commands to run after "script" file. ' 'Note: You can use \\$IMAGE escaped environment variable.',
+        dest='build_extra_steps',
+        help=(
+            'Extra Dockerfile instructions appended at the end of\n'
+            'the generated Dockerfile. Each value is added as a\n'
+            'separate line.\n'
+            '(default: none)'
+        ),
     )
     parser.add_argument(
         '--build-env-args',
@@ -172,26 +261,56 @@ def main(return_result=False):
         nargs='*',
         action='append',
         default=[],
-        help='Args used as environment variables '
-        'More info about: https://vsupalov.com/docker-build-time-env-values\n'
-        'E.g. --build-env-args ENVAR1\n'
-        'It generates the following line for Dockerfile:\n'
-        'ARG ENVVAR1\nENV ENVVAR1=$ENVVAR1',
+        help=(
+            'Declare build-time environment variables for Docker.\n'
+            'Each variable NAME produces these Dockerfile lines:\n'
+            '  ARG NAME\n'
+            '  ENV NAME=$NAME\n'
+            'Can be specified multiple times.\n'
+            'Example: --build-env-args MY_VAR\n'
+            'NOTE: in DeployV mode, these are rendered differently\n'
+            '(as shell exports rather than ARG/ENV pairs).\n'
+            'More info: https://vsupalov.com/docker-build-time-env-values\n'
+            '(default: none)'
+        ),
     )
+
+    # ── Script hooks ─────────────────────────────────────────────────
+    parser.add_argument(
+        '--runs-at-the-end-script',
+        dest='runs_at_the_end_script',
+        nargs='*',
+        default="",
+        help=(
+            'Commands appended at the end of the generated "script"\n'
+            'entrypoint (after the main Travis script section).\n'
+            'You can reference the built image via \\$IMAGE.\n'
+            'NOTE: if omitted, "sleep 2" is injected by default to\n'
+            'keep the container alive for interactive debugging. Pass\n'
+            'an empty string to disable: --runs-at-the-end-script ""\n'
+            '(default: "sleep 2")'
+        ),
+    )
+
+    # ── DeployV mode ─────────────────────────────────────────────────
     parser.add_argument(
         '--deployv',
         dest='deployv',
         action='store_true',
         default=False,
-        help='Use the image generated from the CI and used in deployV',
+        help=(
+            'Enable DeployV mode: use the Docker image built by the CI\n'
+            'pipeline instead of building from .travis.yml.\n'
+            'If the repo has no .travis.yml but contains a variables.sh,\n'
+            'this mode is activated automatically.\n'
+            'The image name is auto-constructed from variables.sh as:\n'
+            '  DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT\n'
+            '(default: False)'
+        ),
     )
-    parser.add_argument(
-        '--build-extra-steps',
-        nargs='*',
-        default="",
-        dest='build_extra_steps',
-        help='Append these extra steps at the end of the Dockerfile',
-    )
+
+    # ── Version ──────────────────────────────────────────────────────
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
     args = parser.parse_args()
     revision = args.git_revision
@@ -211,7 +330,7 @@ def main(return_result=False):
     deployv = args.deployv
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(',')
     runs_at_the_end_script = args.runs_at_the_end_script or None
-    build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
+    build_env_args = [arg for sublist in args.build_env_args for arg in sublist]
     rcfiles = [(expanduser(rc_file), os.path.join('$HOME', os.path.basename(rc_file))) for rc_file in rcfiles_args]
     if no_clone:
         os_kwargs = {
