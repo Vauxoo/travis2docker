@@ -114,6 +114,8 @@ def main(return_result=False):
         help=(
             'Base Docker image for the generated Dockerfile.\n'
             'Only needed when .travis.yml does not specify build_image.\n'
+            'NOTE: the current default is a legacy Odoo 8.0 image; you\n'
+            'likely want to override it for modern projects.\n'
             '(default: vauxoo/odoo-80-image-shippable-auto)'
         ),
     )
@@ -266,6 +268,8 @@ def main(return_result=False):
             '  ENV NAME=$NAME\n'
             'Can be specified multiple times.\n'
             'Example: --build-env-args MY_VAR\n'
+            'NOTE: in DeployV mode, these are rendered differently\n'
+            '(as shell exports rather than ARG/ENV pairs).\n'
             'More info: https://vsupalov.com/docker-build-time-env-values\n'
             '(default: none)'
         ),
@@ -281,7 +285,10 @@ def main(return_result=False):
             'Commands appended at the end of the generated "script"\n'
             'entrypoint (after the main Travis script section).\n'
             'You can reference the built image via \\$IMAGE.\n'
-            '(default: none)'
+            'NOTE: if omitted, "sleep 2" is injected by default to\n'
+            'keep the container alive for interactive debugging. Pass\n'
+            'an empty string to disable: --runs-at-the-end-script ""\n'
+            '(default: "sleep 2")'
         ),
     )
 
@@ -296,6 +303,8 @@ def main(return_result=False):
             'pipeline instead of building from .travis.yml.\n'
             'If the repo has no .travis.yml but contains a variables.sh,\n'
             'this mode is activated automatically.\n'
+            'The image name is auto-constructed from variables.sh as:\n'
+            '  DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT\n'
             '(default: False)'
         ),
     )
