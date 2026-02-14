@@ -243,23 +243,17 @@ class Travis2Docker(object):
             build_content = self.build_template.render(
                 image=new_image, dirname_dockerfile=self.curr_work_path, **self.build_extra_params
             ).strip('\n ')
-            try:
-                f_build.write(build_content.encode('utf-8'))
-            except TypeError:
-                f_build.write(build_content)
+            f_build.write(build_content)
 
             run_content = self.run_template.render(image=new_image, **self.run_extra_params).strip('\n ')
-            try:
-                f_run.write(run_content.encode('utf-8'))
-            except TypeError:
-                f_run.write(run_content)
+            f_run.write(run_content)
         self.chmod_execution(build_path)
         self.chmod_execution(run_path)
 
     def _python_version_env(self):
         versions = self.yml.pop('python', {})
         if not versions:
-            self._python_versions = ['3.5']  # 3.5 by default
+            self._python_versions = ['3.10']  # 3.10 by default (Odoo 16+)
             return
         if not isinstance(versions, list):
             versions = [versions]
@@ -345,20 +339,11 @@ class Travis2Docker(object):
                                     kwargs[key_to_extend].extend(result[key_to_extend])
                         kwargs.update(self.os_kwargs)
                         dockerfile_content = self.dockerfile_template.render(kwargs).strip('\n ')
-                        try:
-                            f_dockerfile.write(dockerfile_content.encode('utf-8'))
-                        except TypeError:
-                            f_dockerfile.write(dockerfile_content)
+                        f_dockerfile.write(dockerfile_content)
                         entrypoint_content = self.entrypoint_template.render(kwargs).strip('\n ')
-                        try:
-                            f_entrypoint.write(entrypoint_content.encode('utf-8'))
-                        except TypeError:
-                            f_entrypoint.write(entrypoint_content)
+                        f_entrypoint.write(entrypoint_content)
                         rvm_env_content = self.jinja_env.get_template('rvm_env.sh').render(kwargs).strip('\n ')
-                        try:
-                            f_rvm.write(rvm_env_content.encode('UTF-8'))
-                        except TypeError:
-                            f_rvm.write(rvm_env_content)
+                        f_rvm.write(rvm_env_content)
                     self.compute_build_scripts(count, version)
                     self.chmod_execution(entryp_path)
                     work_paths.append(self.curr_work_path)
