@@ -1,9 +1,11 @@
-# pylint: disable=useless-object-inheritance,print-used,except-pass
+# pylint: disable=useless-object-inheritance,except-pass
 
-
+import logging
 import os
 import re
 import subprocess
+
+_logger = logging.getLogger(__name__)
 
 
 def decode_utf(field):
@@ -59,8 +61,8 @@ class GitRun(object):
     def run(self, cmd):
         """Execute git command in bash"""
         cmd = ['git', '--git-dir=%s' % self.path] + cmd
-        print("cmd list", cmd)
-        print("cmd", ' '.join(cmd))
+        _logger.debug("cmd list %s", cmd)
+        _logger.debug("cmd %s", ' '.join(cmd))
         res = None
         try:
             res = subprocess.check_output(cmd)
