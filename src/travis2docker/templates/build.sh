@@ -159,6 +159,15 @@ setup_coverage() {
   echo "export MODULES2INSTALL=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "%h,")" >> ${HOME}/.bashrc
 }
 
+local_bin_path(){
+    # Add ~/.local/bin to PATH at shell startup if it exists and is not already there
+    cat >> ${HOME}/.bashrc << 'EOF'
+if [ -d "$HOME/.local/bin" ] && [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+EOF
+}
+
 
 bash_colorized(){
     cat >> ~/.bashrc << 'EOF'
