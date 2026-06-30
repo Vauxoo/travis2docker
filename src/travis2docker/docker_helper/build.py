@@ -15,12 +15,12 @@ def ssh_keyscan2known_hosts(url, known_hosts_path=None):
 
     # Clear current known hosts
     cmd = ["ssh-keygen", "-R", url]
-    print(' '.join(cmd))
+    print(" ".join(cmd))
     subprocess.call(cmd)
 
     # Scan new key of host and store
     cmd = ["ssh-keyscan", "-p", "22", url]
-    print(' '.join(cmd))
+    print(" ".join(cmd))
     keys_scanned = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip()
     with open(known_hosts_path, "r+") as known_hosts_f:
         known_hosts_f.write("\n" + keys_scanned)
@@ -36,13 +36,26 @@ def git_set_remote(path=None):
     path = os.path.join(path, "*", "**", ".git")
     hosts_scanned = set()
     for git_dir in glob.glob(path, recursive=True):
-        git_cmd = ["git", "--work-tree=%s" % os.path.dirname(git_dir), "--git-dir=%s" % git_dir]
+        git_cmd = [
+            "git",
+            "--work-tree=%s" % os.path.dirname(git_dir),
+            "--git-dir=%s" % git_dir,
+        ]
         cmd = git_cmd + ["remote", "get-url", "--push", "origin"]
-        remote = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip().splitlines()[0]
+        remote = (
+            subprocess.check_output(cmd)
+            .decode(sys.stdout.encoding)
+            .strip()
+            .splitlines()[0]
+        )
         git_re_match = git_re.search(remote)
 
         # Configure to fetch all branches (not only the single-branch)
-        cmd = git_cmd + ["config", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"]
+        cmd = git_cmd + [
+            "config",
+            "remote.origin.fetch",
+            "+refs/heads/*:refs/remotes/origin/*",
+        ]
         subprocess.call(cmd)
 
         if not git_re_match:
@@ -57,18 +70,23 @@ def git_set_remote(path=None):
         # Transform https url to ssh format
         ssh_url_stb = "git@%s:%s/%s" % (host, org, repo)
         cmd = git_cmd + ["remote", "set-url", "origin", ssh_url_stb]
-        print(' '.join(cmd))
+        print(" ".join(cmd))
         subprocess.call(cmd)
 
         # Unshallow repository
         cmd = git_cmd + ["rev-parse", "--is-shallow-repository"]
-        is_shallow = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip().splitlines()[0]
-        if is_shallow == 'true':
+        is_shallow = (
+            subprocess.check_output(cmd)
+            .decode(sys.stdout.encoding)
+            .strip()
+            .splitlines()[0]
+        )
+        if is_shallow == "true":
             if host not in hosts_scanned:
                 ssh_keyscan2known_hosts(host)
                 hosts_scanned.add(host)
             cmd = git_cmd + ["fetch", "--unshallow"]
-            print(' '.join(cmd))
+            print(" ".join(cmd))
             subprocess.call(cmd)
 
         # Add extra remote if "stb" so add "dev" if "dev" so add "stb"
@@ -76,5 +94,5 @@ def git_set_remote(path=None):
         new_remote = "dev" if "dev" in new_org else "stb"
         ssh_url_dev = "git@%s:%s/%s" % (host, new_org, repo)
         cmd = git_cmd + ["remote", "add", new_remote, ssh_url_dev]
-        print(' '.join(cmd))
+        print(" ".join(cmd))
         subprocess.call(cmd)
