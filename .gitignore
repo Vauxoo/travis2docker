@@ -1,4 +1,8 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[cod]
+
+*.DS_Store*
 
 # C extensions
 *.so
@@ -25,14 +29,21 @@ pyvenv*/
 
 # Installer logs
 pip-log.txt
+pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+htmlcov/
+.tox/
 .coverage
-.tox
+.coveragerc
 .coverage.*
+et
+.cache
 nosetests.xml
 coverage.xml
-htmlcov
+*,cover
+.hypothesis/
+
 
 # Translations
 *.mo
@@ -64,6 +75,37 @@ docs/_build
 .appveyor.token
 *.bak
 
+# Translations
+*.mo
+
+# Pycharm
+.idea
+
+# VS Code
+.vscode
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Sphinx documentation
+docs/_build/
+
+# Backup files
+*~
+*.swp
+
+# docker JSON packages
+package-lock.json
+package.json
+
+# docker node_modules
+node_modules/
+
 # pre-commit-vauxoo
 .bandit*
 .config/
@@ -71,6 +113,7 @@ docs/_build
 .eslintrc*
 .flake8*
 .isort.cfg
+.oca_hooks*
 .pre-commit*.yaml
 .prettierrc.yml
 .pylintrc*
