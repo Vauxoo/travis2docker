@@ -42,12 +42,7 @@ def git_set_remote(path=None):
             "--git-dir=%s" % git_dir,
         ]
         cmd = git_cmd + ["remote", "get-url", "--push", "origin"]
-        remote = (
-            subprocess.check_output(cmd)
-            .decode(sys.stdout.encoding)
-            .strip()
-            .splitlines()[0]
-        )
+        remote = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip().splitlines()[0]
         git_re_match = git_re.search(remote)
 
         # Configure to fetch all branches (not only the single-branch)
@@ -75,12 +70,7 @@ def git_set_remote(path=None):
 
         # Unshallow repository
         cmd = git_cmd + ["rev-parse", "--is-shallow-repository"]
-        is_shallow = (
-            subprocess.check_output(cmd)
-            .decode(sys.stdout.encoding)
-            .strip()
-            .splitlines()[0]
-        )
+        is_shallow = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip().splitlines()[0]
         if is_shallow == "true":
             if host not in hosts_scanned:
                 ssh_keyscan2known_hosts(host)

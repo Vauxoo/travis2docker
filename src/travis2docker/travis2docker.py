@@ -1,4 +1,4 @@
-# pylint: disable=useless-object-inheritance,consider-using-with,too-complex
+# pylint: disable=useless-object-inheritance,consider-using-with,too-complex,print-used
 import collections
 import errno
 import json
@@ -15,15 +15,11 @@ try:
 except ImportError:
     from yaml import load as yaml_load
 
-RE_ENV_STR = (
-    r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}"
-    + r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
-)
+RE_ENV_STR = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
 RE_EXPORT_STR = r"^(?P<export>export|EXPORT)( )+" + RE_ENV_STR
 
 
-class Travis2Docker(object):
-
+class Travis2Docker:
     re_export = re.compile(RE_EXPORT_STR, re.M)
 
     @property
@@ -89,42 +85,28 @@ class Travis2Docker(object):
         self.run_extra_params = {}
         self.build_env_args = build_env_args
         self.deployv = deployv
-        self.runs_at_the_end_script = (
-            ["sleep 2"] if runs_at_the_end_script is None else runs_at_the_end_script
-        )
+        self.runs_at_the_end_script = ["sleep 2"] if runs_at_the_end_script is None else runs_at_the_end_script
         self.variables_sh_data = {}
         self.build_extra_steps = build_extra_steps
         if deployv:
             self.variables_sh_data = {
-                var.lower(): value
-                for _, _, var, value in self.re_export.findall(
-                    os_kwargs["variables_sh"]
-                )
+                var.lower(): value for _, _, var, value in self.re_export.findall(os_kwargs["variables_sh"])
             }
             self.variables_sh_data.update({"sha_short": os_kwargs["sha"][:7]})
             image = (
-                "%(docker_image_repo)s:%(main_app)s-%(version)s-%(sha_short)s"
-                % self.variables_sh_data
+                "%(docker_image_repo)s:%(main_app)s-%(version)s-%(sha_short)s" % self.variables_sh_data
                 if not image
                 else image
             )
-            build_sh = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "templates", "build.sh"
-            )
+            build_sh = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "build.sh")
             entrypoint_sh = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 "templates",
                 "entrypoint_deployv.sh",
             )
-            docker_helper = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "docker_helper"
-            )
-            vscode_conf = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "templates", ".vscode"
-            )
-            coveragerc = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "templates", ".coveragerc"
-            )
+            docker_helper = os.path.join(os.path.dirname(os.path.realpath(__file__)), "docker_helper")
+            vscode_conf = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", ".vscode")
+            coveragerc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", ".coveragerc")
             copy_paths.append([build_sh, "/home/odoo/build.sh"])
             copy_paths.append([entrypoint_sh, "/entrypoint.sh"])
             copy_paths.append([docker_helper, "/home/odoo/build"])
@@ -143,14 +125,10 @@ class Travis2Docker(object):
         if dockerfile is None:
             dockerfile = "Dockerfile"
         if templates_path is None:
-            templates_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "templates"
-            )
+            templates_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates")
         self.copy_paths = copy_paths
         self.os_kwargs = os_kwargs
-        self.jinja_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(templates_path)
-        )
+        self.jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
         self.image = image
         self._sections = collections.OrderedDict()
         self._sections["env"] = "env"
@@ -223,30 +201,18 @@ class Travis2Docker(object):
             for ubuntu_source in self.ubuntu_json:
                 if alias == ubuntu_source["alias"]:
                     if ubuntu_source["key_url"]:
-                        sources.append(
-                            'curl -sSL "'
-                            + ubuntu_source["key_url"]
-                            + '" | apt-key add -'
-                        )
+                        sources.append('curl -sSL "' + ubuntu_source["key_url"] + '" | apt-key add -')
                     if ubuntu_source["sourceline"].startswith("ppa:"):
-                        sources.append(
-                            'apt-add-repository -y "'
-                            + ubuntu_source["sourceline"]
-                            + '"'
-                        )
+                        sources.append('apt-add-repository -y "' + ubuntu_source["sourceline"] + '"')
                     else:
                         sources.append(
-                            'echo "'
-                            + ubuntu_source["sourceline"]
-                            + '" | tee -a /etc/apt/sources.list > /dev/null'
+                            'echo "' + ubuntu_source["sourceline"] + '" | tee -a /etc/apt/sources.list > /dev/null'
                         )
         new_data = data["apt"].copy()
         new_data["sources"] = sources
         return new_data
 
-    def _make_script(
-        self, data, section, add_entrypoint=False, add_run=False, prefix=""
-    ):
+    def _make_script(self, data, section, add_entrypoint=False, add_run=False, prefix=""):
         file_path = os.path.join(self.curr_work_path, prefix, section)
         self.mkdir_p(os.path.dirname(file_path))
         with open(file_path, "w") as f_section:
@@ -254,9 +220,7 @@ class Travis2Docker(object):
             for var, value in self.curr_exports:
                 f_section.write("\nexport %s=%s" % (var, value))
             for line in data:
-                self.curr_exports.extend(
-                    [(var, value) for _, _, var, value in self.re_export.findall(line)]
-                )
+                self.curr_exports.extend([(var, value) for _, _, var, value in self.re_export.findall(line)])
                 f_section.write("\n" + line)
             if section == "script":
                 for run_at_the_end_script in self.runs_at_the_end_script:
@@ -278,23 +242,17 @@ class Travis2Docker(object):
     def compute_build_scripts(self, prefix_build, version):
         build_path = os.path.join(self.curr_work_path, "10-build.sh")
         run_path = os.path.join(self.curr_work_path, "20-run.sh")
-        new_image = (
-            self.new_image + "_" + version.replace(".", "_") + "_" + str(prefix_build)
-        )
+        new_image = self.new_image + "_" + version.replace(".", "_") + "_" + str(prefix_build)
         with open(build_path, "w") as f_build, open(run_path, "w") as f_run:
             build_content = self.build_template.render(
-                image=new_image,
-                dirname_dockerfile=self.curr_work_path,
-                **self.build_extra_params
+                image=new_image, dirname_dockerfile=self.curr_work_path, **self.build_extra_params
             ).strip("\n ")
             try:
                 f_build.write(build_content.encode("utf-8"))
             except TypeError:
                 f_build.write(build_content)
 
-            run_content = self.run_template.render(
-                image=new_image, **self.run_extra_params
-            ).strip("\n ")
+            run_content = self.run_template.render(image=new_image, **self.run_extra_params).strip("\n ")
             try:
                 f_run.write(run_content.encode("utf-8"))
             except TypeError:
@@ -315,11 +273,7 @@ class Travis2Docker(object):
 
     def _transform_yml_matrix2env(self):
         matrix = self.yml.pop("matrix", {})
-        envs = [
-            include["env"]
-            for include in matrix.get("include", [])
-            if include.get("env")
-        ]
+        envs = [include["env"] for include in matrix.get("include", []) if include.get("env")]
         if envs:
             self.yml["env"] = envs
 
@@ -350,14 +304,10 @@ class Travis2Docker(object):
                         "env_%d_job_%d" % (count, job_count),
                     )
                     curr_dockerfile = os.path.join(self.curr_work_path, self.dockerfile)
-                    entryp_path = os.path.join(
-                        self.curr_work_path, "files", "entrypoint.sh"
-                    )
+                    entryp_path = os.path.join(self.curr_work_path, "files", "entrypoint.sh")
                     self.mkdir_p(os.path.dirname(entryp_path))
                     entryp_relpath = os.path.relpath(entryp_path, self.curr_work_path)
-                    rvm_env_path = os.path.join(
-                        self.curr_work_path, "files", "rvm_env.sh"
-                    )
+                    rvm_env_path = os.path.join(self.curr_work_path, "files", "rvm_env.sh")
                     rvm_env_relpath = os.path.relpath(rvm_env_path, self.curr_work_path)
                     copies = []
                     for copy_path, dest in self.copy_paths:
@@ -377,9 +327,9 @@ class Travis2Docker(object):
                         "build_env_args": self.build_env_args,
                         "build_extra_steps": self.build_extra_steps,
                     }
-                    with open(curr_dockerfile, "w") as f_dockerfile, open(
-                        entryp_path, "w"
-                    ) as f_entrypoint, open(rvm_env_path, "w") as f_rvm:
+                    with open(curr_dockerfile, "w") as f_dockerfile, open(entryp_path, "w") as f_entrypoint, open(
+                        rvm_env_path, "w"
+                    ) as f_rvm:
                         for section, _ in self._sections.items():
                             if section == "env":
                                 continue
@@ -400,25 +350,17 @@ class Travis2Docker(object):
                                 if key_to_extend in result:
                                     kwargs[key_to_extend].extend(result[key_to_extend])
                         kwargs.update(self.os_kwargs)
-                        dockerfile_content = self.dockerfile_template.render(
-                            kwargs
-                        ).strip("\n ")
+                        dockerfile_content = self.dockerfile_template.render(kwargs).strip("\n ")
                         try:
                             f_dockerfile.write(dockerfile_content.encode("utf-8"))
                         except TypeError:
                             f_dockerfile.write(dockerfile_content)
-                        entrypoint_content = self.entrypoint_template.render(
-                            kwargs
-                        ).strip("\n ")
+                        entrypoint_content = self.entrypoint_template.render(kwargs).strip("\n ")
                         try:
                             f_entrypoint.write(entrypoint_content.encode("utf-8"))
                         except TypeError:
                             f_entrypoint.write(entrypoint_content)
-                        rvm_env_content = (
-                            self.jinja_env.get_template("rvm_env.sh")
-                            .render(kwargs)
-                            .strip("\n ")
-                        )
+                        rvm_env_content = self.jinja_env.get_template("rvm_env.sh").render(kwargs).strip("\n ")
                         try:
                             f_rvm.write(rvm_env_content.encode("UTF-8"))
                         except TypeError:
@@ -433,9 +375,7 @@ class Travis2Docker(object):
         """:param paths list: List of paths to copy"""
         src = os.path.expandvars(os.path.expanduser(path))
         basename = os.path.basename(src)
-        dest_path = os.path.expandvars(
-            os.path.expanduser(os.path.join(self.curr_work_path, basename))
-        )
+        dest_path = os.path.expandvars(os.path.expanduser(os.path.join(self.curr_work_path, basename)))
         if os.path.isdir(dest_path):
             shutil.rmtree(dest_path)
         if os.path.isdir(src):
@@ -462,12 +402,10 @@ class Travis2Docker(object):
             to_copy = rsa_key
 
         if not to_copy:
-            print(
-                "No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work."
-            )
+            print("No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work.")
             return
 
-        with open(to_copy, "r", encoding="utf-8") as key_fd:
+        with open(to_copy, encoding="utf-8") as key_fd:
             pub_key = key_fd.read()
 
         with open(

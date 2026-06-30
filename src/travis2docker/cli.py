@@ -12,13 +12,10 @@ Why does this file exist, and why not put this in __main__?
     there's no ``travis2docker.__main__`` in ``sys.modules``.
 
 """
+
 import argparse
 import os
-from os.path import expanduser
-from os.path import expandvars
-from os.path import isdir
-from os.path import isfile
-from os.path import join
+from os.path import expanduser, expandvars, isdir, isfile, join
 from sys import stdout
 
 from . import __version__
@@ -32,8 +29,7 @@ def get_git_data(project, path, revision):
     git_obj.update()
     data = {
         "sha": git_obj.get_sha(revision),
-        "content": git_obj.show_file(".travis.yml", revision)
-        or git_obj.show_file(".t2d.yml", revision),
+        "content": git_obj.show_file(".travis.yml", revision) or git_obj.show_file(".t2d.yml", revision),
         "variables_sh": git_obj.show_file("variables.sh", revision),
         "repo_owner": git_obj.owner,
         "repo_project": git_obj.repo,
@@ -56,7 +52,7 @@ def yml_read(yml_path):
             yml_path_expanded = alt_yml_path_expanded
         else:
             return
-    with open(yml_path_expanded, "r") as f_yml:
+    with open(yml_path_expanded) as f_yml:
         return f_yml.read()
 
 
@@ -82,9 +78,7 @@ def main(return_result=False):
     parser.add_argument(
         "--docker-user",
         dest="docker_user",
-        help="User of work into Dockerfile."
-        "\nBased on your docker image."
-        "\nDefault: root",
+        help="User of work into Dockerfile." "\nBased on your docker image." "\nDefault: root",
     )
     parser.add_argument(
         "--docker-image",
@@ -108,8 +102,7 @@ def main(return_result=False):
     parser.add_argument(
         "--add-remote",
         dest="remotes",
-        help="Add git remote to git of build path, separated by a comma."
-        "\nUse remote name. E.g. 'Vauxoo,moylop260'",
+        help="Add git remote to git of build path, separated by a comma." "\nUse remote name. E.g. 'Vauxoo,moylop260'",
     )
     parser.add_argument(
         "--exclude-after-success",
@@ -144,14 +137,12 @@ def main(return_result=False):
         dest="build_extra_cmds",
         nargs="*",
         default="",
-        help='Extra commands to run after "build" script. '
-        "Note: You can use \\$IMAGE escaped environment variable.",
+        help='Extra commands to run after "build" script. ' "Note: You can use \\$IMAGE escaped environment variable.",
     )
     parser.add_argument(
         "--travis-yml-path",
         dest="travis_yml_path",
-        help="Optional path of file .travis.yml to use.\n"
-        "Default: Extracted from git repo and git revision.",
+        help="Optional path of file .travis.yml to use.\n" "Default: Extracted from git repo and git revision.",
         default=None,
     )
     parser.add_argument(
@@ -168,16 +159,13 @@ def main(return_result=False):
         help="Optional paths of configuration files to "
         "copy for user's HOME path into container, separated by a comma.",
     )
-    parser.add_argument(
-        "-v", "--version", action="version", version="%(prog)s " + __version__
-    )
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument(
         "--runs-at-the-end-script",
         dest="runs_at_the_end_script",
         nargs="*",
         default="",
-        help='Extra commands to run after "script" file. '
-        "Note: You can use \\$IMAGE escaped environment variable.",
+        help='Extra commands to run after "script" file. ' "Note: You can use \\$IMAGE escaped environment variable.",
     )
     parser.add_argument(
         "--build-env-args",
@@ -225,10 +213,7 @@ def main(return_result=False):
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(",")
     runs_at_the_end_script = args.runs_at_the_end_script or None
     build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
-    rcfiles = [
-        (expanduser(rc_file), os.path.join("$HOME", os.path.basename(rc_file)))
-        for rc_file in rcfiles_args
-    ]
+    rcfiles = [(expanduser(rc_file), os.path.join("$HOME", os.path.basename(rc_file))) for rc_file in rcfiles_args]
     if no_clone:
         os_kwargs = {
             "repo_owner": "local_file",
@@ -256,8 +241,7 @@ def main(return_result=False):
             "The file %s is empty." % travis_yml_path
             if travis_yml_path
             else "The repo or the branch is incorrect value, because "
-            + "It can not got the .travis.yml or variables.sh content from %s %s. "
-            % (git_repo, revision)
+            + "It can not got the .travis.yml or variables.sh content from %s %s. " % (git_repo, revision)
             + "\nPlease, verify access repository,"
             + "\nverify exists url and revision, "
             + "\nverify exists .travis.yml"
