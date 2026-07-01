@@ -156,3 +156,83 @@ Note, to combine the coverage data from all the tox environments run:
       - ::
 
             PYTEST_ADDOPTS=--cov-append tox
+
+
+Release process
+===============
+
+This project uses `bump2version <https://github.com/c4urself/bump2version>`_ to
+manage version bumps across ``.bumpversion.cfg``, ``docs/conf.py``,
+``setup.py`` and ``src/travis2docker/__init__.py``.
+
+Requirements
+************
+
+* Write access to push to ``main`` and to push tags.
+* A GPG key configured for signing git tags. The CI pipeline that publishes
+  the package to PyPI only builds from **signed** tags::
+
+      git config --global user.signingkey <YOUR_GPG_KEY_ID>
+
+* ``bump2version`` installed::
+
+      pip install bump2version
+
+Steps to release a new version
+******************************
+
+
+1. Make sure you are on ``main`` and it is up to date, with no local commits
+   ahead of ``origin``::
+
+       git checkout main
+       git pull origin main
+       git status  # must be clean
+
+2. Bump the version. This creates a commit and a tag automatically
+   (choose ``patch``, ``minor`` or ``major`` as needed)::
+
+       bump2version patch
+
+   This updates::
+
+       .bumpversion.cfg
+       docs/conf.py
+       setup.py
+       src/travis2docker/__init__.py
+
+3. Verify the tag was created and that it is **signed**::
+
+       git tag -v vX.Y.Z
+
+   If ``sign_tags`` is not enabled in ``.bumpversion.cfg``, the tag created
+   in step 2 will **not** be signed and the CI build/publish step will not
+   run. In that case, re-create the tag manually before pushing::
+
+       git tag -d vX.Y.Z
+       git tag -s vX.Y.Z -m "vX.Y.Z"
+
+   To avoid this every time, add the following to ``.bumpversion.cfg``::
+
+       [bumpversion]
+       current_version = X.Y.Z
+       commit = True
+       tag = True
+       sign_tags = True
+
+4. Push the branch and the tag::
+
+       git push origin main --tags
+
+   Pushing the signed tag is what triggers the CI job that builds and
+   publishes the package to PyPI.
+
+Troubleshooting
+***************
+
+* **"tag already exists" / dirty working tree**: make sure ``git status`` is
+  clean and ``git pull origin main`` was run before ``bump2version``,
+  otherwise the bump commit/tag will be based on stale history.
+* **CI does not trigger a PyPI build**: check that the pushed tag is signed
+  (``git tag -v vX.Y.Z`` should show a valid GPG signature) and that
+  ``user.signingkey`` is configured correctly.
