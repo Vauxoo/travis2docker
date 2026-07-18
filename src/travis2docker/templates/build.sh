@@ -46,6 +46,7 @@ odoo_conf(){
     fi
     $ENTRYPOINT run true
     sed -i '/db_host\|db_password\|db_user\|workers\|list_db/d' $ODOO_CONF
+    sed -i 's/\(with_demo\s*=\s*\)False/\1True/' $ODOO_CONF
     su odoo -c "mkdir -p $ODOORC_DATA_DIR"
 }
 
