@@ -99,7 +99,6 @@ install_dev_tools(){
         virtualenv \
         ipdb \
         pre-commit-vauxoo \
-        diff-highlight \
         pg-activity \
         nodeenv \
         pdbpp
@@ -116,6 +115,11 @@ install_dev_tools(){
     touch /home/odoo/full_test-requirements.txt
     sudo -E pip install -r /home/odoo/full_test-requirements.txt
 
+    # Install git-delta from .deb since not all Ubuntu versions ship the package
+    GIT_DELTA_VERSION=0.18.2
+    wget -q https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_$(dpkg --print-architecture).deb -O /tmp/git-delta.deb && \
+        apt install -qqq -y /tmp/git-delta.deb || true
+
     # Keep alive the ssh server
     #   60 seconds * 360 = 21600 seconds = 6 hours
     # https://www.bjornjohansen.no/ssh-timeout
@@ -126,13 +130,16 @@ install_dev_tools(){
     wget -O /tmp/ngrok.tgz https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz && \
     tar xvzf /tmp/ngrok.tgz -C /usr/local/bin || true
 
-    # Configure diff-highlight on git after install
-    cat >> /etc/gitconfig << EOF
-[pager]
-    log = diff-highlight | less
-    show = diff-highlight | less
-    diff = diff-highlight | less
-EOF
+    # Configure color for git diff if git-delta is already installed
+    if command -v delta >/dev/null 2>&1; then
+        git config --system core.pager delta
+        git config --system interactive.diffFilter "delta --color-only"
+
+        git config --system delta.navigate true
+        git config --system delta.line-numbers true
+        git config --system delta.syntax-theme DarkNeon
+        git config --system delta.keep-plus-minus-markers true
+    fi
     cat >> /etc/multitail.conf << EOF
 # Odoo log
 colorscheme:odoo
