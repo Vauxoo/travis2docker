@@ -216,6 +216,27 @@ chown_all(){
     chown -R odoo:odoo /etc/postgresql-common/common-vauxoo.conf
 }
 
+set_odoo_ids(){
+    # OrchestSH images (ORCHESTSH=True) use UID/GID 5410 for the odoo user;
+    # older images use 1000/1001. A mismatch causes permission issues when
+    # sharing files across containers, so align both to 5410 when they differ.
+    CURRENT_UID=$(id -u odoo)
+    CURRENT_GID=$(id -g odoo)
+    NEW_ID=5410
+    if [ "${CURRENT_GID}" != "${NEW_ID}" ]; then
+        echo "Changing odoo GID from ${CURRENT_GID} to ${NEW_ID}"
+        groupmod -g "${NEW_ID}" odoo
+        # groupmod does not re-chown any file
+        find / -xdev -gid "${CURRENT_GID}" -exec chown -h ":${NEW_ID}" {} + 2>/dev/null || true
+    fi
+    if [ "${CURRENT_UID}" != "${NEW_ID}" ]; then
+        echo "Changing odoo UID from ${CURRENT_UID} to ${NEW_ID}"
+        usermod -u "${NEW_ID}" odoo
+        # usermod only re-chowns files inside the home directory
+        find / -xdev -uid "${CURRENT_UID}" -exec chown -h "${NEW_ID}" {} + 2>/dev/null || true
+    fi
+}
+
 configure_vim(){
     git_clone_copy(){
       URL="${1}"

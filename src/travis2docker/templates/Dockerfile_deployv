@@ -23,6 +23,7 @@ ENV {{ build_env_arg }}=TRUE
 
 # Create cluster with odoo as owner and use environment variables instead of odoo cfg to connect
 RUN . /home/odoo/build.sh && \
+    set_odoo_ids && \
     install_dev_tools && \
     service_postgres_without_sudo odoo odoo && \
     install_pgcli_venv && \
