@@ -4,20 +4,21 @@
 import os
 import subprocess
 import sys
+from shutil import which
+
+import pytest
 
 from travis2docker.cli import main as cli_main
+from travis2docker.exceptions import InvalidRepoBranchError
 
-try:
-    from shutil import which  # python3.x
-except ImportError:
-    from whichcraft import which
-
-
-def main():
-    return cli_main(return_result=True)
+VARIABLES_SH = """export DOCKER_IMAGE_REPO=quay.io/vauxoo/myproject
+export MAIN_APP=myproject
+export VERSION=16.0
+export CUSTOM_VAR="custom value"
+"""
 
 
-def check_failed_dockerfile(scripts, lines_required=None):
+def check_dockerfile_lint(scripts):
     npm_bin = which("npm")
     npm_bin_path = subprocess.check_output([npm_bin, "list"]).decode("UTF-8").strip("\n") if npm_bin else ""
     npm_bin_path_g = subprocess.check_output([npm_bin, "list", "-g"]).decode("UTF-8").strip("\n") if npm_bin else ""
@@ -34,123 +35,84 @@ def check_failed_dockerfile(scripts, lines_required=None):
         output = pipe.stdout.read().decode("utf-8")
         assert "Check passed" in output, fname_dkr
         print("Check dockerfile output", output)
-        if not lines_required:
-            continue
-        with open(fname_dkr) as fdkr:
-            fdkr_lines = fdkr.readlines()
-            fdkr_lines[-1] = fdkr_lines[-1].strip("\n") + "\n"
-            for line_required in lines_required:
-                assert line_required + "\n" in fdkr_lines
-            print(fdkr_lines)
 
 
-def test_main():
-    # TODO: fix duplicated code
-    dirname_example = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "examples")
-    argv = ["travis2docker", "foo", "bar", "--no-clone"]
-    sources_py = "source ${REPO_REQUIREMENTS}/virtualenv/" + "python2.7/bin/activate"
-    sources_js = "source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate"
-    lines_required = [
-        'RUN /bin/bash -c "{source_py} && {source_js} '
-        '&& source /rvm_env.sh && /install"'.format(source_py=sources_py, source_js=sources_js),
-        "ENTRYPOINT /entrypoint.sh",
+def create_repo(base_path, files):
+    repo_path = os.path.join(str(base_path), "myrepo")
+    os.makedirs(repo_path)
+    subprocess.check_call(["git", "init", "-b", "main", repo_path])
+    for fname, content in files.items():
+        with open(os.path.join(repo_path, fname), "w") as f_repo:
+            f_repo.write(content)
+    subprocess.check_call(["git", "-C", repo_path, "add", "-A"])
+    subprocess.check_call(
+        ["git", "-C", repo_path, "-c", "user.email=test@test.com", "-c", "user.name=test", "commit", "-m", "initial"]
+    )
+    return repo_path
+
+
+def test_main_deployv(tmp_path):
+    repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
+    sys.argv = [
+        "travis2docker",
+        repo,
+        "main",
+        "--root-path",
+        os.path.join(str(tmp_path), "t2d"),
+        "--build-env-args",
+        "BUILD_ENV1",
+        "--build-env-args",
+        "BUILD_ENV2",
+        "--build-extra-steps",
+        "touch /home/odoo/extra_step_done",
     ]
+    scripts = cli_main(return_result=True)
+    assert len(scripts) == 1, "Scripts returned should be 1"
+    fname_dkr = os.path.join(scripts[0], "Dockerfile")
+    with open(fname_dkr) as f_dkr:
+        dkr_content = f_dkr.read()
+    sha_short = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"]).decode("UTF-8")[:7]
+    assert "FROM quay.io/vauxoo/myproject:myproject-16.0-%s" % sha_short in dkr_content
+    assert "ENV BUILD_ENV1=TRUE" in dkr_content
+    assert "ENV BUILD_ENV2=TRUE" in dkr_content
+    assert "RUN touch /home/odoo/extra_step_done" in dkr_content
+    assert "ENTRYPOINT /entrypoint.sh" in dkr_content
+    assert "COPY build.sh /home/odoo/build.sh" in dkr_content
+    assert "COPY entrypoint_deployv.sh /entrypoint.sh" in dkr_content
+    assert "COPY docker_helper /home/odoo/build" in dkr_content
+    for script in ("10-build.sh", "20-run.sh"):
+        script_path = os.path.join(scripts[0], script)
+        assert os.path.isfile(script_path)
+        assert os.access(script_path, os.X_OK), "%s should be executable" % script
+    check_dockerfile_lint(scripts)
 
-    example = os.path.join(dirname_example, "example_1.yml")
-    sys.argv = argv + [
-        "--travis-yml-path",
-        example,
-        "--add-rcfile=%s,%s" % (example, dirname_example),
-    ]
-    scripts = main()
-    assert len(scripts) == 1, "Scripts returned should be 1 for %s" % example
-    check_failed_dockerfile(scripts, lines_required)
-    assert os.path.isdir(os.path.join(scripts[0], os.path.basename(dirname_example)))
-    assert os.path.isfile(os.path.join(scripts[0], os.path.basename(example)))
 
-    sys.argv = argv + [
-        "--travis-yml-path",
-        example,
+def test_main_docker_image_parameter(tmp_path):
+    repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
+    sys.argv = [
+        "travis2docker",
+        repo,
+        "main",
+        "--root-path",
+        os.path.join(str(tmp_path), "t2d"),
         "--docker-image",
-        "quay.io/travisci/travis-python",
+        "quay.io/vauxoo/myproject:custom-tag",
     ]
-    scripts = main()
-    assert len(scripts) == 1, "Scripts returned should be 1 for %s" % example
-    check_failed_dockerfile(scripts, ["FROM quay.io/travisci/travis-python"])
-
-    example = os.path.join(dirname_example, "example_2.yml")
-    sys.argv = argv + ["--travis-yml-path", example]
-    scripts = main()
-    assert len(scripts) == 1, "Scripts returned should be 1 for %s" % example
-    check_failed_dockerfile(scripts, lines_required + ['ENV VARIABLE="value"'])
-
-    example = os.path.join(dirname_example, "example_3.yml")
-    sys.argv = argv + ["--travis-yml-path", example]
-    scripts = main()
-    assert len(scripts) == 2, "Scripts returned should be 2 for %s" % example
-    check_failed_dockerfile(scripts, lines_required)
+    scripts = cli_main(return_result=True)
+    assert len(scripts) == 1, "Scripts returned should be 1"
     with open(os.path.join(scripts[0], "Dockerfile")) as f_dkr:
         dkr_content = f_dkr.read()
-        assert 'VARIABLE_MATRIX_1="value matrix 1"' in dkr_content
-        assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
-        assert "RUN apt-add-repository" in dkr_content
-    with open(os.path.join(scripts[1], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert 'VARIABLE_MATRIX_2="value matrix 2"' in dkr_content
-        assert 'ENV VARIABLE_GLOBAL="value global"' in dkr_content
-        assert "RUN apt-add-repository" in dkr_content
+    assert "FROM quay.io/vauxoo/myproject:custom-tag" in dkr_content
 
-    example = os.path.join(dirname_example, "example_4.yml")
-    sys.argv = argv + ["--travis-yml-path", example]
-    scripts = main()
-    assert len(scripts) == 2, "Scripts returned should be 2 for %s" % example
-    check_failed_dockerfile(scripts)
-    with open(os.path.join(scripts[0], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert 'VARIABLE_INCLUDE_1="value include 1"' in dkr_content
-    with open(os.path.join(scripts[1], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert 'VARIABLE_INCLUDE_2="value include 2"' in dkr_content
 
-    # Tests that, when specified, the postgresql key sets
-    # automatically the environment variable $PSQL_VERSION
-    example = os.path.join(dirname_example, "example_5.yml")
-    sys.argv = argv + ["--travis-yml-path", example]
-    scripts = main()
-    assert len(scripts) == 2, "Scripts returned should be 2 for %s" % example
-    check_failed_dockerfile(scripts)
-    with open(os.path.join(scripts[0], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert ' PSQL_VERSION="9.5" ' in dkr_content
-    with open(os.path.join(scripts[1], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
-        assert ' PSQL_VERSION="9.5" ' in dkr_content
-
-    url = "https://github.com/Vauxoo/travis2docker.git"
-    sys.argv = ["travis2docker", url, "main"]
-    scripts = main()
-    sources_py = "source ${REPO_REQUIREMENTS}/virtualenv/" + "python3.5/bin/activate"
-    lines_required.pop(0)
-    lines_required.append(
-        'RUN /bin/bash -c "{source_py} && {source_js} && '
-        "source /rvm_env.sh && "
-        '/before_install && /install"'.format(source_py=sources_py, source_js=sources_js),
-    )
-    check_failed_dockerfile(scripts, lines_required + ["ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker"])
-
-    sys.argv = ["travis2docker", url, "pull/54"]
-    scripts = main()
-    check_failed_dockerfile(scripts, lines_required + ["ENV TRAVIS_REPO_SLUG=Vauxoo/travis2docker"])
-
-    sys.argv += ["--build-env-args", "BUILD_ENV1", "--build-env-args", "BUILD_ENV2"]
-    scripts = main()
-    check_failed_dockerfile(
-        scripts,
-        lines_required
-        + [
-            "ARG BUILD_ENV1",
-            "ENV BUILD_ENV1=$BUILD_ENV1",
-            "ARG BUILD_ENV2",
-            "ENV BUILD_ENV2=$BUILD_ENV2",
-        ],
-    )
+def test_main_without_variables_sh(tmp_path):
+    repo = create_repo(tmp_path, {"README.md": "no variables.sh here"})
+    sys.argv = [
+        "travis2docker",
+        repo,
+        "main",
+        "--root-path",
+        os.path.join(str(tmp_path), "t2d"),
+    ]
+    with pytest.raises(InvalidRepoBranchError):
+        cli_main(return_result=True)

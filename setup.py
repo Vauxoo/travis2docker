@@ -15,7 +15,7 @@ setup(
     name="travis2docker",
     version="6.4.28",
     license="BSD-3-Clause",
-    description="Script to generate Dockerfile from .travis.yml file",
+    description="Script to generate a development Dockerfile from the deployv image of a repository",
     long_description="%s\n%s"
     % (
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub("", read("README.rst")),
