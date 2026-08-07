@@ -24,6 +24,15 @@ from .git_run import GitRun
 from .travis2docker import Travis2Docker
 
 
+def variables_sh_read(variables_sh_path):
+    variables_sh_path = pathlib.Path(variables_sh_path).expanduser()
+    if variables_sh_path.is_dir():
+        variables_sh_path /= "variables.sh"
+    if not variables_sh_path.is_file():
+        return None
+    return variables_sh_path.read_text()
+
+
 def get_git_data(project, path, revision):
     git_obj = GitRun(project, path, path_prefix_repo=True)
     git_obj.update()
@@ -87,6 +96,13 @@ def main(return_result=False):
         help="Add git remote to git of build path, separated by a comma.\nUse remote name. E.g. 'Vauxoo,moylop260'",
     )
     parser.add_argument(
+        "--exclude-after-success",
+        dest="exclude_after_success",
+        action="store_true",
+        default=False,
+        help="Deprecated. Ignored: the travis_after_success section does not exist anymore",
+    )
+    parser.add_argument(
         "--run-extra-args",
         dest="run_extra_args",
         help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
@@ -115,6 +131,26 @@ def main(return_result=False):
         help='Extra commands to run after "build" script. Note: You can use \\$IMAGE escaped environment variable.',
     )
     parser.add_argument(
+        "--travis-yml-path",
+        dest="travis_yml_path",
+        default=None,
+        help="Deprecated. Ignored: the .travis.yml file is not used anymore",
+    )
+    parser.add_argument(
+        "--variables-sh-path",
+        dest="variables_sh_path",
+        default=None,
+        help="Optional path of the variables.sh file (or the directory containing it) to use.\n"
+        "Default: Extracted from git repo and git revision.",
+    )
+    parser.add_argument(
+        "--no-clone",
+        dest="no_clone",
+        action="store_true",
+        default=False,
+        help="Avoid cloning the repository. It requires --variables-sh-path",
+    )
+    parser.add_argument(
         "--add-rcfile",
         dest="add_rcfile",
         default="",
@@ -122,6 +158,13 @@ def main(return_result=False):
         "copy for user's HOME path into container, separated by a comma.",
     )
     parser.add_argument("-v", "--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--runs-at-the-end-script",
+        dest="runs_at_the_end_script",
+        nargs="*",
+        default="",
+        help="Deprecated. Ignored: the script section of .travis.yml does not exist anymore",
+    )
     parser.add_argument(
         "--build-env-args",
         dest="build_env_args",
@@ -150,6 +193,14 @@ def main(return_result=False):
     )
 
     args = parser.parse_args()
+    deprecated_args = {
+        "--exclude-after-success": args.exclude_after_success,
+        "--travis-yml-path": args.travis_yml_path,
+        "--runs-at-the-end-script": args.runs_at_the_end_script,
+    }
+    for deprecated_arg, value in deprecated_args.items():
+        if value:
+            stdout.write("WARNING: %s is deprecated and its value will be ignored\n" % deprecated_arg)
     revision = args.git_revision
     git_repo = args.git_repo_url
     git_base = GitRun.get_data_url(git_repo, False)[0]
@@ -166,11 +217,25 @@ def main(return_result=False):
     rcfiles = [
         (pathlib.Path(rc_file).expanduser(), "$HOME/%s" % pathlib.Path(rc_file).name) for rc_file in rcfiles_args
     ]
-    os_kwargs = get_git_data(git_repo, pathlib.Path(root_path) / "repo", revision)
+    if args.no_clone:
+        os_kwargs = {
+            "repo_owner": "local_file",
+            "repo_project": "local_file",
+            "revision": revision,
+            "sha": "local_file",
+            "project": git_repo,
+        }
+    else:
+        os_kwargs = get_git_data(git_repo, pathlib.Path(root_path) / "repo", revision)
+
+    if args.variables_sh_path:
+        os_kwargs["variables_sh"] = variables_sh_read(args.variables_sh_path)
 
     if not os_kwargs.get("variables_sh"):
         msg = (
-            "The repo or the branch is incorrect value, because "
+            "The file %s is empty or does not exist." % args.variables_sh_path
+            if args.variables_sh_path
+            else "The repo or the branch is incorrect value, because "
             + "It can not got the variables.sh content from %s %s. " % (git_repo, revision)
             + "\nPlease, verify access repository,"
             + "\nverify exists url and revision, "

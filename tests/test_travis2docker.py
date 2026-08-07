@@ -76,6 +76,13 @@ def test_main_deployv(tmp_path, monkeypatch):
         "BUILD_ENV2",
         "--build-extra-steps",
         "touch /home/odoo/extra_step_done",
+        # Deprecated parameters must still be accepted (and ignored)
+        "--deployv",
+        "--exclude-after-success",
+        "--travis-yml-path",
+        "foo.yml",
+        "--runs-at-the-end-script",
+        "echo done",
     ]
     scripts = cli_main(return_result=True)
     assert len(scripts) == 1, "Scripts returned should be 1"
@@ -112,6 +119,41 @@ def test_main_docker_image_parameter(tmp_path, monkeypatch):
     assert len(scripts) == 1, "Scripts returned should be 1"
     dkr_content = (pathlib.Path(scripts[0]) / "Dockerfile").read_text()
     assert "FROM quay.io/vauxoo/myproject:custom-tag" in dkr_content
+
+
+def test_main_no_clone(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "variables.sh").write_text(VARIABLES_SH)
+    sys.argv = [
+        "travis2docker",
+        "foo",
+        "bar",
+        "--no-clone",
+        "--variables-sh-path",
+        str(tmp_path),
+        "--root-path",
+        str(tmp_path / "t2d"),
+    ]
+    scripts = cli_main(return_result=True)
+    assert len(scripts) == 1, "Scripts returned should be 1"
+    dkr_content = (pathlib.Path(scripts[0]) / "Dockerfile").read_text()
+    assert "FROM quay.io/vauxoo/myproject:myproject-16.0-local_f" in dkr_content
+
+
+def test_main_no_clone_missing_variables_sh(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    sys.argv = [
+        "travis2docker",
+        "foo",
+        "bar",
+        "--no-clone",
+        "--variables-sh-path",
+        str(tmp_path / "missing.sh"),
+        "--root-path",
+        str(tmp_path / "t2d"),
+    ]
+    with pytest.raises(InvalidRepoBranchError):
+        cli_main(return_result=True)
 
 
 def test_main_without_variables_sh(tmp_path, monkeypatch):
