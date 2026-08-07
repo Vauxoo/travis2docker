@@ -68,15 +68,16 @@ Usage
 =====
 
 `travisfile2dockerfile REPO_URL BRANCH`
- 
+
 Or with pull request
  `travisfile2dockerfile REPO_URL pull/##`
- 
-In REPO_URL use the ssh url of github.
+
+In REPO_URL use the ssh or https url of the git repository.
+For private repositories use the ssh url.
 
 For more information execute:
  `travisfile2dockerfile --help`
- 
+
 Example:
  `travisfile2dockerfile --root-path=$HOME/t2d git@github.com:Vauxoo/forecast.git 8.0`
 
@@ -144,6 +145,17 @@ SSH key without password
 ************************
 
 Dockerfile doesn't support a prompt to enter your password, so you need to remove it from your ssh keys.
+
+Recommended: use Ed25519 keys. The tool copies ``~/.ssh/id_ed25519.pub`` to the
+container's ``authorized_keys`` and warns if only RSA keys are found.
+
+::
+
+  export fname=~/.ssh/id_ed25519
+  cp ${fname} ${fname}_with_pwd
+  ssh-keygen -p -N "" -f ${fname}
+
+For legacy RSA keys:
 
 ::
 
