@@ -106,7 +106,7 @@ def main(return_result=False):
         "--run-extra-args",
         dest="run_extra_args",
         help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
-        default="-itP -e LANG=C.UTF-8",
+        default="-e LANG=C.UTF-8",
     )
     parser.add_argument(
         "--run-extra-cmds",
