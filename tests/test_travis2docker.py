@@ -56,10 +56,13 @@ def create_repo(base_path, files):
         "-m",
         "initial",
     ])
-    return str(repo_path)
+    # Return the path relative to base_path: an absolute path would be flattened
+    # into the clone dirname, exceeding the Windows MAX_PATH limit
+    return repo_path.name
 
 
-def test_main_deployv(tmp_path):
+def test_main_deployv(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
     sys.argv = [
         "travis2docker",
@@ -93,7 +96,8 @@ def test_main_deployv(tmp_path):
     check_dockerfile_lint(scripts)
 
 
-def test_main_docker_image_parameter(tmp_path):
+def test_main_docker_image_parameter(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
     sys.argv = [
         "travis2docker",
@@ -110,7 +114,8 @@ def test_main_docker_image_parameter(tmp_path):
     assert "FROM quay.io/vauxoo/myproject:custom-tag" in dkr_content
 
 
-def test_main_without_variables_sh(tmp_path):
+def test_main_without_variables_sh(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     repo = create_repo(tmp_path, {"README.md": "no variables.sh here"})
     sys.argv = [
         "travis2docker",
