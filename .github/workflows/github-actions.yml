@@ -60,6 +60,9 @@ jobs:
         pip --version
         tox --version
         pip list --format=freeze
+    - name: Enable git long paths (Windows)
+      if: runner.os == 'Windows'
+      run: git config --global core.longpaths true
     - name: test
       run: |
         mkdir -p ~/.ssh

@@ -42,7 +42,7 @@ class GitRun:
 
     @staticmethod
     def url2dirname(url):
-        for invalid_char in "@:/#":
+        for invalid_char in "@:/#\\":
             url = url.replace(invalid_char, "_")
         return url
 
