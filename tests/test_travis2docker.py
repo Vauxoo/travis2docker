@@ -1,6 +1,7 @@
 # No logger planned to use here
 # pylint: disable=print-used,consider-using-with
 
+import json
 import os
 import pathlib
 import subprocess
@@ -101,6 +102,51 @@ def test_main_deployv(tmp_path, monkeypatch):
         assert script_path.is_file()
         assert os.access(script_path, os.X_OK), "%s should be executable" % script
     check_dockerfile_lint(scripts)
+
+
+def test_main_deployv_vscode(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DEPLOYV_VSCODE", "1")
+    repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
+    sys.argv = [
+        "travis2docker",
+        repo,
+        "main",
+        "--root-path",
+        str(tmp_path / "t2d"),
+    ]
+    scripts = cli_main(return_result=True)
+    assert len(scripts) == 1, "Scripts returned should be 1"
+    work_path = pathlib.Path(scripts[0])
+    dkr_content = (work_path / "Dockerfile").read_text()
+    assert "update.code.visualstudio.com" in dkr_content
+    assert "/home/odoo/.vscode-server" in dkr_content
+    assert "--install-extension ms-python.python" in dkr_content
+    devcontainer = json.loads((work_path / ".devcontainer.json").read_text())
+    assert devcontainer["name"] == "myproject"
+    assert devcontainer["remoteUser"] == "odoo"
+    assert devcontainer["workspaceFolder"] == "/home/odoo/instance"
+    assert devcontainer["image"].endswith(":main")
+    assert "ms-python.python" in devcontainer["customizations"]["vscode"]["extensions"]
+    check_dockerfile_lint(scripts)
+
+
+def test_main_deployv_without_vscode(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DEPLOYV_VSCODE", raising=False)
+    repo = create_repo(tmp_path, {"variables.sh": VARIABLES_SH})
+    sys.argv = [
+        "travis2docker",
+        repo,
+        "main",
+        "--root-path",
+        str(tmp_path / "t2d"),
+    ]
+    scripts = cli_main(return_result=True)
+    work_path = pathlib.Path(scripts[0])
+    dkr_content = (work_path / "Dockerfile").read_text()
+    assert ".vscode-server" not in dkr_content
+    assert not (work_path / ".devcontainer.json").exists()
 
 
 def test_main_docker_image_parameter(tmp_path, monkeypatch):

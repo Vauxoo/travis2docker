@@ -245,6 +245,10 @@ def main(return_result=False):
     os_kwargs.update({"remotes": remotes, "git_base": git_base})
     if docker_user:
         os_kwargs.update({"user": docker_user})
+    # Opt-in with DEPLOYV_VSCODE=1: pre-install the VS Code server and extensions in the
+    # image and generate a .devcontainer.json. Disabled by default so e.g. vim users
+    # do not pay the extra build time downloading VS Code stuff they will never use
+    vscode = os.environ.get("DEPLOYV_VSCODE", "").strip().lower() not in ("", "0", "false", "no")
     t2d = Travis2Docker(
         work_path=pathlib.Path(root_path) / "script" / GitRun.url2dirname(git_repo) / revision,
         image=default_docker_image,
@@ -252,6 +256,7 @@ def main(return_result=False):
         copy_paths=[(pathlib.Path("~/.ssh").expanduser(), "$HOME/.ssh")] + rcfiles,
         build_env_args=build_env_args,
         build_extra_steps=args.build_extra_steps,
+        vscode=vscode,
     )
     t2d.build_extra_params = {
         "extra_params": build_extra_args,

@@ -119,6 +119,28 @@ Example enabling more than one::
     travisfile2dockerfile --build-env-args VIM_INSTALL ZSH_INSTALL \
         git@github.com:Vauxoo/forecast.git 8.0
 
+VS Code support (``DEPLOYV_VSCODE``)
+====================================
+
+Opt-in with the environment variable ``DEPLOYV_VSCODE=1``::
+
+    DEPLOYV_VSCODE=1 travisfile2dockerfile git@github.com:Vauxoo/forecast.git 8.0
+
+It is disabled by default so vim/terminal users do not pay the extra build
+time. When enabled:
+
+- The Dockerfile pre-installs the VS Code server and the extensions listed in
+  ``templates/.vscode/extensions.json`` at **build** time, so attaching VS Code
+  to the container does not download anything live. The server version is
+  pinned to the commit of your local ``code`` binary when available (run
+  ``travisfile2dockerfile`` again after upgrading VS Code to re-pin it);
+  otherwise the latest stable server is used. If the pinned server does not
+  match your client, VS Code just falls back to downloading its own version;
+  the pre-installed extensions are version-independent and are reused anyway.
+- A ``.devcontainer.json`` is generated next to the Dockerfile pointing to the
+  image built by ``10-build.sh``, so opening that folder in VS Code offers
+  "Reopen in Container" automatically.
+
 codebase-memory-deployv
 =======================
 

@@ -1,8 +1,10 @@
 # pylint: disable=useless-object-inheritance,consider-using-with,print-used
+import json
 import pathlib
 import re
 import shutil
 import stat
+import subprocess
 from tempfile import gettempdir
 
 import jinja2
@@ -39,6 +41,20 @@ class Travis2Docker:
     def chmod_execution(file_path):
         file_path.chmod(file_path.stat().st_mode | stat.S_IEXEC)
 
+    @staticmethod
+    def get_vscode_version():
+        """Return "commit:SHA" of the local VS Code client to pre-install the matching
+        server into the image, or "latest" if there is no "code" binary available"""
+        code_bin = shutil.which("code")
+        if code_bin:
+            try:
+                lines = subprocess.check_output([code_bin, "--version"]).decode("UTF-8").splitlines()
+                if len(lines) >= 2 and lines[1].strip():
+                    return "commit:%s" % lines[1].strip()
+            except (subprocess.CalledProcessError, OSError):
+                pass
+        return "latest"
+
     def __init__(
         self,
         image=None,
@@ -49,8 +65,10 @@ class Travis2Docker:
         copy_paths=None,
         build_env_args=None,
         build_extra_steps=None,
+        vscode=False,
     ):
         self.curr_work_path = None
+        self.vscode = vscode
         self.build_extra_params = {}
         self.run_extra_params = {}
         self.build_env_args = build_env_args
@@ -73,6 +91,10 @@ class Travis2Docker:
         copy_paths.append([templates_dir / ".vscode", "/home/odoo/.vscode"])
         copy_paths.append([templates_dir / ".coveragerc", "/home/odoo/.coveragerc"])
         os_kwargs.setdefault("user", "odoo")
+        if self.vscode:
+            extensions_data = json.loads((templates_dir / ".vscode" / "extensions.json").read_text())
+            os_kwargs.setdefault("vscode_extensions", extensions_data["recommendations"])
+            os_kwargs.setdefault("vscode_version", self.get_vscode_version())
         if dockerfile is None:
             dockerfile = "Dockerfile"
         if templates_path is None:
@@ -113,15 +135,27 @@ class Travis2Docker:
             "image": self.image,
             "build_env_args": self.build_env_args,
             "build_extra_steps": self.build_extra_steps,
+            "vscode": self.vscode,
         }
         kwargs.update(self.os_kwargs)
         with curr_dockerfile.open("w") as f_dockerfile:
             dockerfile_content = self.dockerfile_template.render(kwargs).strip("\n ")
             f_dockerfile.write(dockerfile_content)
+        if self.vscode:
+            self.compute_devcontainer()
         self.compute_build_scripts()
         work_paths = [str(self.curr_work_path)]
         self.curr_work_path = None
         return work_paths
+
+    def compute_devcontainer(self):
+        """Generate a .devcontainer.json so VS Code offers reopening the generated
+        image as a Development Container"""
+        name = self.os_kwargs.get("repo_project") or self.variables_sh_data.get("main_app", "odoo")
+        devcontainer_content = self.jinja_env.get_template("devcontainer.json").render(
+            image=self.new_image, name=name, **self.os_kwargs
+        )
+        (self.curr_work_path / ".devcontainer.json").write_text(devcontainer_content)
 
     def copy_path(self, path):
         """:param paths list: List of paths to copy"""
