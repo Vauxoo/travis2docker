@@ -15,7 +15,7 @@ Why does this file exist, and why not put this in __main__?
 
 import argparse
 import os
-from os.path import expanduser, expandvars, isdir, isfile, join
+from os.path import expanduser, join
 from sys import stdout
 
 from . import __version__
@@ -29,7 +29,6 @@ def get_git_data(project, path, revision):
     git_obj.update()
     data = {
         "sha": git_obj.get_sha(revision),
-        "content": git_obj.show_file(".travis.yml", revision) or git_obj.show_file(".t2d.yml", revision),
         "variables_sh": git_obj.show_file("variables.sh", revision),
         "repo_owner": git_obj.owner,
         "repo_project": git_obj.repo,
@@ -41,28 +40,13 @@ def get_git_data(project, path, revision):
     return data
 
 
-def yml_read(yml_path):
-    yml_path_expanded = expandvars(expanduser(yml_path))
-    alt_yml_path_expanded = None
-    if isdir(yml_path_expanded):
-        yml_path_expanded = join(yml_path_expanded, ".travis.yml")
-        alt_yml_path_expanded = join(yml_path_expanded, ".t2d.yml")
-    if not isfile(yml_path_expanded):
-        if alt_yml_path_expanded and isfile(alt_yml_path_expanded):
-            yml_path_expanded = alt_yml_path_expanded
-        else:
-            return
-    with open(yml_path_expanded) as f_yml:
-        return f_yml.read()
-
-
 def main(return_result=False):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "git_repo_url",
         help="Specify repository git of work."
         "\nThis is used to clone it "
-        "and get file .travis.yml or .shippable.yml"
+        "and get the variables.sh file of the deployv image"
         "\nIf your repository is private, "
         "don't use https url, "
         "use ssh url",
@@ -78,16 +62,14 @@ def main(return_result=False):
     parser.add_argument(
         "--docker-user",
         dest="docker_user",
-        help="User of work into Dockerfile." "\nBased on your docker image." "\nDefault: root",
+        help="User of work into Dockerfile." "\nBased on your docker image." "\nDefault: odoo",
     )
     parser.add_argument(
         "--docker-image",
         dest="default_docker_image",
         help="Docker image to use by default in Dockerfile."
-        "\nUse this parameter if don't "
-        "exists value: 'build_image: IMAGE_NAME' "
-        "in .travis.yml"
-        "\nDefault: 'vauxoo/odoo-80-image-shippable-auto'",
+        "\nDefault: built from variables.sh as "
+        "'DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT'",
     )
     default_root_path = os.environ.get("TRAVIS2DOCKER_ROOT_PATH")
     if not default_root_path:
@@ -103,13 +85,6 @@ def main(return_result=False):
         "--add-remote",
         dest="remotes",
         help="Add git remote to git of build path, separated by a comma." "\nUse remote name. E.g. 'Vauxoo,moylop260'",
-    )
-    parser.add_argument(
-        "--exclude-after-success",
-        dest="exclude_after_success",
-        action="store_true",
-        default=False,
-        help="Exclude `travis_after_success` section to entrypoint",
     )
     parser.add_argument(
         "--run-extra-args",
@@ -140,19 +115,6 @@ def main(return_result=False):
         help='Extra commands to run after "build" script. ' "Note: You can use \\$IMAGE escaped environment variable.",
     )
     parser.add_argument(
-        "--travis-yml-path",
-        dest="travis_yml_path",
-        help="Optional path of file .travis.yml to use.\n" "Default: Extracted from git repo and git revision.",
-        default=None,
-    )
-    parser.add_argument(
-        "--no-clone",
-        dest="no_clone",
-        action="store_true",
-        help="Avoid clone the repository. It will require travis-yml-path",
-        default=False,
-    )
-    parser.add_argument(
         "--add-rcfile",
         dest="add_rcfile",
         default="",
@@ -160,13 +122,6 @@ def main(return_result=False):
         "copy for user's HOME path into container, separated by a comma.",
     )
     parser.add_argument("-v", "--version", action="version", version="%(prog)s " + __version__)
-    parser.add_argument(
-        "--runs-at-the-end-script",
-        dest="runs_at_the_end_script",
-        nargs="*",
-        default="",
-        help='Extra commands to run after "script" file. ' "Note: You can use \\$IMAGE escaped environment variable.",
-    )
     parser.add_argument(
         "--build-env-args",
         dest="build_env_args",
@@ -183,8 +138,8 @@ def main(return_result=False):
         "--deployv",
         dest="deployv",
         action="store_true",
-        default=False,
-        help="Use the image generated from the CI and used in deployV",
+        default=True,
+        help="Deprecated. The deployv image is now the only supported mode",
     )
     parser.add_argument(
         "--build-extra-steps",
@@ -202,63 +157,33 @@ def main(return_result=False):
     root_path = args.root_path
     default_docker_image = args.default_docker_image
     remotes = args.remotes and args.remotes.split(",")
-    exclude_after_success = args.exclude_after_success
     run_extra_args = args.run_extra_args
     build_extra_args = args.build_extra_args
-    travis_yml_path = args.travis_yml_path
     build_extra_cmds = "\n".join(args.build_extra_cmds)
     run_extra_cmds = "\n".join(args.run_extra_cmds)
-    no_clone = args.no_clone
-    deployv = args.deployv
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(",")
-    runs_at_the_end_script = args.runs_at_the_end_script or None
     build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
     rcfiles = [(expanduser(rc_file), os.path.join("$HOME", os.path.basename(rc_file))) for rc_file in rcfiles_args]
-    if no_clone:
-        os_kwargs = {
-            "repo_owner": "local_file",
-            "repo_project": "local_file",
-            "revision": revision,
-            "sha": "local_file",
-            "project": git_repo,
-        }
-    else:
-        os_kwargs = get_git_data(git_repo, join(root_path, "repo"), revision)
+    os_kwargs = get_git_data(git_repo, join(root_path, "repo"), revision)
 
-    if travis_yml_path:
-        yml_content = yml_read(travis_yml_path)
-    else:
-        yml_content = os_kwargs["content"]
-
-    if not yml_content and os_kwargs.get("variables_sh"):
-        deployv = True
-        yml_content = "deployv: True"
-    if not default_docker_image and not deployv:
-        default_docker_image = "vauxoo/odoo-80-image-shippable-auto"
-
-    if not yml_content:
+    if not os_kwargs.get("variables_sh"):
         msg = (
-            "The file %s is empty." % travis_yml_path
-            if travis_yml_path
-            else "The repo or the branch is incorrect value, because "
-            + "It can not got the .travis.yml or variables.sh content from %s %s. " % (git_repo, revision)
+            "The repo or the branch is incorrect value, because "
+            + "It can not got the variables.sh content from %s %s. " % (git_repo, revision)
             + "\nPlease, verify access repository,"
             + "\nverify exists url and revision, "
-            + "\nverify exists .travis.yml"
+            + "\nverify exists variables.sh"
         )
         raise InvalidRepoBranchError(msg)
     os_kwargs.update({"remotes": remotes, "git_base": git_base})
     if docker_user:
         os_kwargs.update({"user": docker_user})
     t2d = Travis2Docker(
-        yml_buffer=yml_content,
         work_path=join(root_path, "script", GitRun.url2dirname(git_repo), revision),
         image=default_docker_image,
         os_kwargs=os_kwargs,
         copy_paths=[(expanduser("~/.ssh"), "$HOME/.ssh")] + rcfiles,
-        runs_at_the_end_script=runs_at_the_end_script,
         build_env_args=build_env_args,
-        deployv=deployv,
         build_extra_steps=args.build_extra_steps,
     )
     t2d.build_extra_params = {
@@ -269,11 +194,11 @@ def main(return_result=False):
         "extra_params": run_extra_args,
         "extra_cmds": run_extra_cmds,
     }
-    fname_scripts = t2d.compute_dockerfile(skip_after_success=exclude_after_success)
+    fname_scripts = t2d.compute_dockerfile()
     if fname_scripts:
         fname_list = "- " + "\n- ".join(fname_scripts)
         stdout.write("\nGenerated scripts:\n%s\n" % fname_list)
-        if deployv and not default_docker_image:
+        if not default_docker_image:
             stdout.write("=" * 80)
             # TODO: Add the URL to open the pipelines
             stdout.write(

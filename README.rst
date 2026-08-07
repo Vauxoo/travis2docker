@@ -53,7 +53,7 @@ Overview
 
 .. end-badges
 
-Script to generate Dockerfile from .travis.yml file
+Script to generate a development Dockerfile from the deployv image of a repository (based on its ``variables.sh`` file)
 
 * Free software: BSD license
 
@@ -81,19 +81,19 @@ Example:
  `travisfile2dockerfile --root-path=$HOME/t2d git@github.com:Vauxoo/forecast.git 8.0`
 
 The output is:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1`
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/2`
-
-The first one is the build for env `TESTS=1`, the second one is for env with `LINT_CHECK=1`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0`
 
 To build image:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1/10-build.sh`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/10-build.sh`
 
 To create container:
- `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/1/20-run.sh --entrypoint=bash`
+ `${HOME}/t2d/script/git_github.com_Vauxoo_forecast.git/8.0/20-run.sh --entrypoint=bash`
 
-To run the test (into of container):
- `/entrypoint.sh`
+The repository needs a ``variables.sh`` file in its root path (the one used by
+the deployv images built from the CI). By default the docker image is built
+from its values as ``DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT``; use
+``--docker-image=quay.io/vauxoo/PROJECT:TAG`` to pick the image pushed by the
+``build_docker`` pipeline instead.
 
 Optional tools (``--build-env-args``)
 =====================================
@@ -151,19 +151,6 @@ Dockerfile doesn't support a prompt to enter your password, so you need to remov
   cp ${fname} ${fname}_with_pwd
   openssl rsa -in ${fname} -out ${fname}_without_pwd
   cp ${fname}_without_pwd ${fname}
-
-Download the big image
-**********************
-
-Travis2docker uses a default image with many packages pre-installed.
-
-`docker pull vauxoo/odoo-80-image-shippable-auto`
-
-Note: You can define a custom image to use with `--docker-image` parameter.
-
-For example if you want use the original image of travis you can add the following parameters:
-
-`--docker-image=quay.io/travisci/travis-python --docker-user=travis`
 
 Install docker
 **************
