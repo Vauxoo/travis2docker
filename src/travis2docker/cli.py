@@ -14,14 +14,16 @@ Why does this file exist, and why not put this in __main__?
 """
 
 import argparse
+import logging
 import os
 import pathlib
-from sys import stdout
 
 from . import __version__
 from .exceptions import InvalidRepoBranchError
 from .git_run import GitRun
 from .travis2docker import Travis2Docker
+
+_logger = logging.getLogger(__name__)
 
 
 def variables_sh_read(variables_sh_path):
@@ -50,6 +52,7 @@ def get_git_data(project, path, revision):
 
 
 def main(return_result=False):
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     default_root_path = os.environ.get("TRAVIS2DOCKER_ROOT_PATH")
     if not default_root_path:
         default_root_path = pathlib.Path("~").expanduser()
@@ -233,7 +236,7 @@ def main(return_result=False):
     }
     for deprecated_arg, value in deprecated_args.items():
         if value:
-            stdout.write("WARNING: %s is deprecated and its value will be ignored\n" % deprecated_arg)
+            _logger.warning("%s is deprecated and its value will be ignored", deprecated_arg)
     revision = args.git_revision
     git_repo = args.git_repo_url
     git_base = GitRun.get_data_url(git_repo, False)[0]
@@ -297,18 +300,16 @@ def main(return_result=False):
     fname_scripts = t2d.compute_dockerfile()
     if fname_scripts:
         fname_list = "- " + "\n- ".join(fname_scripts)
-        stdout.write("\nGenerated scripts:\n%s\n" % fname_list)
+        _logger.info("Generated scripts:\n%s", fname_list)
         if not default_docker_image:
-            stdout.write("=" * 80)
             # TODO: Add the URL to open the pipelines
-            stdout.write(
-                '\nTIP: Use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
+            _logger.info(
+                'TIP: Use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
                 'get the PROJECT:TAG info in your "build_docker" pipeline similar to '
                 '\n"... INFO  - deployv.deployv_addon_gitlab_tools.common.common.push_image - '
-                'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"\n'
+                'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"'
             )
-            stdout.write("=" * 80)
     else:
-        stdout.write("\nNo scripts were generated.")
+        _logger.info("No scripts were generated.")
     if return_result:
         return fname_scripts
