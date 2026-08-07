@@ -213,7 +213,7 @@ def main(return_result=False):
     build_extra_cmds = "\n".join(args.build_extra_cmds)
     run_extra_cmds = "\n".join(args.run_extra_cmds)
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(",")
-    build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
+    build_env_args = [build_env_arg for build_env_args in args.build_env_args for build_env_arg in build_env_args]
     rcfiles = [
         (pathlib.Path(rc_file).expanduser(), "$HOME/%s" % pathlib.Path(rc_file).name) for rc_file in rcfiles_args
     ]
