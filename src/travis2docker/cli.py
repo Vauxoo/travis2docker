@@ -16,7 +16,6 @@ Why does this file exist, and why not put this in __main__?
 import argparse
 import os
 import pathlib
-from os.path import join
 from sys import stdout
 
 from . import __version__
@@ -75,7 +74,7 @@ def main(return_result=False):
     default_root_path = os.environ.get("TRAVIS2DOCKER_ROOT_PATH")
     if not default_root_path:
         default_root_path = pathlib.Path("~").expanduser()
-    default_root_path = join(default_root_path, ".t2d")
+    default_root_path = str(pathlib.Path(default_root_path) / ".t2d")
     parser.add_argument(
         "--root-path",
         dest="root_path",
@@ -165,10 +164,9 @@ def main(return_result=False):
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(",")
     build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
     rcfiles = [
-        (pathlib.Path(rc_file).expanduser(), os.path.join("$HOME", pathlib.Path(rc_file).name))
-        for rc_file in rcfiles_args
+        (pathlib.Path(rc_file).expanduser(), "$HOME/%s" % pathlib.Path(rc_file).name) for rc_file in rcfiles_args
     ]
-    os_kwargs = get_git_data(git_repo, join(root_path, "repo"), revision)
+    os_kwargs = get_git_data(git_repo, pathlib.Path(root_path) / "repo", revision)
 
     if not os_kwargs.get("variables_sh"):
         msg = (
@@ -183,7 +181,7 @@ def main(return_result=False):
     if docker_user:
         os_kwargs.update({"user": docker_user})
     t2d = Travis2Docker(
-        work_path=join(root_path, "script", GitRun.url2dirname(git_repo), revision),
+        work_path=pathlib.Path(root_path) / "script" / GitRun.url2dirname(git_repo) / revision,
         image=default_docker_image,
         os_kwargs=os_kwargs,
         copy_paths=[(pathlib.Path("~/.ssh").expanduser(), "$HOME/.ssh")] + rcfiles,

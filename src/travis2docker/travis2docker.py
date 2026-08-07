@@ -1,5 +1,4 @@
 # pylint: disable=useless-object-inheritance,consider-using-with,print-used
-import os
 import pathlib
 import re
 import shutil
@@ -38,11 +37,7 @@ class Travis2Docker:
 
     @staticmethod
     def chmod_execution(file_path):
-        pathlib.Path(file_path).chmod(os.stat(file_path).st_mode | stat.S_IEXEC)
-
-    @staticmethod
-    def mkdir_p(path):
-        pathlib.Path(path).mkdir(exist_ok=True, parents=True)
+        file_path.chmod(file_path.stat().st_mode | stat.S_IEXEC)
 
     def __init__(
         self,
@@ -70,17 +65,13 @@ class Travis2Docker:
         self.variables_sh_data.update({"sha_short": os_kwargs["sha"][:7]})
         if not image:
             image = "%(docker_image_repo)s:%(main_app)s-%(version)s-%(sha_short)s" % self.variables_sh_data
-        templates_dir = os.path.join(pathlib.Path(os.path.realpath(__file__)).parent, "templates")
-        build_sh = os.path.join(templates_dir, "build.sh")
-        entrypoint_sh = os.path.join(templates_dir, "entrypoint_deployv.sh")
-        docker_helper = os.path.join(pathlib.Path(os.path.realpath(__file__)).parent, "docker_helper")
-        vscode_conf = os.path.join(templates_dir, ".vscode")
-        coveragerc = os.path.join(templates_dir, ".coveragerc")
-        copy_paths.append([build_sh, "/home/odoo/build.sh"])
-        copy_paths.append([entrypoint_sh, "/entrypoint.sh"])
-        copy_paths.append([docker_helper, "/home/odoo/build"])
-        copy_paths.append([vscode_conf, "/home/odoo/.vscode"])
-        copy_paths.append([coveragerc, "/home/odoo/.coveragerc"])
+        module_dir = pathlib.Path(__file__).resolve().parent
+        templates_dir = module_dir / "templates"
+        copy_paths.append([templates_dir / "build.sh", "/home/odoo/build.sh"])
+        copy_paths.append([templates_dir / "entrypoint_deployv.sh", "/entrypoint.sh"])
+        copy_paths.append([module_dir / "docker_helper", "/home/odoo/build"])
+        copy_paths.append([templates_dir / ".vscode", "/home/odoo/.vscode"])
+        copy_paths.append([templates_dir / ".coveragerc", "/home/odoo/.coveragerc"])
         os_kwargs.setdefault("user", "odoo")
         if dockerfile is None:
             dockerfile = "Dockerfile"
@@ -91,16 +82,15 @@ class Travis2Docker:
         self.jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
         self.image = image
         if work_path is None:
-            base_name = os.path.splitext(pathlib.Path(__file__).name)[0]
-            self.work_path = os.path.join(gettempdir(), base_name)
+            self.work_path = pathlib.Path(gettempdir()) / pathlib.Path(__file__).stem
         else:
-            self.work_path = os.path.expandvars(pathlib.Path(work_path).expanduser())
+            self.work_path = pathlib.Path(work_path).expanduser()
         self.dockerfile = dockerfile
 
     def compute_build_scripts(self):
-        build_path = os.path.join(self.curr_work_path, "10-build.sh")
-        run_path = os.path.join(self.curr_work_path, "20-run.sh")
-        with pathlib.Path(build_path).open("w") as f_build, pathlib.Path(run_path).open("w") as f_run:
+        build_path = self.curr_work_path / "10-build.sh"
+        run_path = self.curr_work_path / "20-run.sh"
+        with build_path.open("w") as f_build, run_path.open("w") as f_run:
             build_content = self.build_template.render(
                 image=self.new_image, dirname_dockerfile=self.curr_work_path, **self.build_extra_params
             ).strip("\n ")
@@ -112,8 +102,8 @@ class Travis2Docker:
 
     def compute_dockerfile(self):
         self.curr_work_path = self.work_path
-        curr_dockerfile = os.path.join(self.curr_work_path, self.dockerfile)
-        self.mkdir_p(self.curr_work_path)
+        curr_dockerfile = self.curr_work_path / self.dockerfile
+        self.curr_work_path.mkdir(exist_ok=True, parents=True)
         copies = []
         for copy_path, dest in self.copy_paths:
             copies.append((self.copy_path(copy_path), dest))
@@ -125,41 +115,40 @@ class Travis2Docker:
             "build_extra_steps": self.build_extra_steps,
         }
         kwargs.update(self.os_kwargs)
-        with pathlib.Path(curr_dockerfile).open("w") as f_dockerfile:
+        with curr_dockerfile.open("w") as f_dockerfile:
             dockerfile_content = self.dockerfile_template.render(kwargs).strip("\n ")
             f_dockerfile.write(dockerfile_content)
         self.compute_build_scripts()
-        work_paths = [self.curr_work_path]
+        work_paths = [str(self.curr_work_path)]
         self.curr_work_path = None
         return work_paths
 
     def copy_path(self, path):
         """:param paths list: List of paths to copy"""
-        src = os.path.expandvars(pathlib.Path(path).expanduser())
-        basename = pathlib.Path(src).name
-        dest_path = os.path.expandvars(pathlib.Path(os.path.join(self.curr_work_path, basename)).expanduser())
-        if pathlib.Path(dest_path).is_dir():
+        src = pathlib.Path(path).expanduser()
+        dest_path = self.curr_work_path / src.name
+        if dest_path.is_dir():
             shutil.rmtree(dest_path)
-        if pathlib.Path(src).is_dir():
+        if src.is_dir():
             try:
                 shutil.copytree(src, dest_path)
             except shutil.Error:  # pylint: disable=except-pass
                 pass  # There are permissions errors to copy
-        elif pathlib.Path(src).is_file():
+        elif src.is_file():
             shutil.copy(src, dest_path)
         else:
             raise UserWarning("Just directory or file is supported to copy [%s]" % src)
-        return os.path.relpath(dest_path, self.curr_work_path)
+        return str(dest_path.relative_to(self.curr_work_path))
 
     def set_authorized_key(self):
         ssh_dir = pathlib.Path("~/.ssh").expanduser()
-        ed_key = os.path.join(ssh_dir, "id_ed25519.pub")
-        rsa_key = os.path.join(ssh_dir, "id_rsa.pub")
+        ed_key = ssh_dir / "id_ed25519.pub"
+        rsa_key = ssh_dir / "id_rsa.pub"
 
-        to_copy = False
-        if pathlib.Path(ed_key).is_file():
+        to_copy = None
+        if ed_key.is_file():
             to_copy = ed_key
-        elif pathlib.Path(rsa_key).is_file():
+        elif rsa_key.is_file():
             print("RSA keys are deprecated, consider changing to ed25519")
             to_copy = rsa_key
 
@@ -167,9 +156,7 @@ class Travis2Docker:
             print("No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work.")
             return
 
-        pub_key = pathlib.Path(to_copy).read_text(encoding="utf-8")
+        pub_key = to_copy.read_text(encoding="utf-8")
 
-        with pathlib.Path(os.path.join(self.curr_work_path, ".ssh", "authorized_keys")).open(
-            "a", encoding="utf-8"
-        ) as auth_fd:
+        with (self.curr_work_path / ".ssh" / "authorized_keys").open("a", encoding="utf-8") as auth_fd:
             auth_fd.write(pub_key)

@@ -27,7 +27,7 @@ def check_dockerfile_lint(scripts):
     lint_bin = which(lint_bin_name) or which(lint_bin_name, path=npm_bin_path + os.pathsep + npm_bin_path_g)
     assert lint_bin, "'%s' not found." % lint_bin_name
     for script in scripts:
-        fname_dkr = os.path.join(script, "Dockerfile")
+        fname_dkr = str(pathlib.Path(script) / "Dockerfile")
         pipe = subprocess.Popen(
             [lint_bin, "-f", fname_dkr],
             stderr=subprocess.STDOUT,
@@ -38,11 +38,11 @@ def check_dockerfile_lint(scripts):
 
 
 def create_repo(base_path, files):
-    repo_path = os.path.join(str(base_path), "myrepo")
-    pathlib.Path(repo_path).mkdir(parents=True)
-    subprocess.check_call(["git", "init", "-b", "main", repo_path])
+    repo_path = pathlib.Path(base_path) / "myrepo"
+    repo_path.mkdir(parents=True)
+    subprocess.check_call(["git", "init", "-b", "main", str(repo_path)])
     for fname, content in files.items():
-        pathlib.Path(os.path.join(repo_path, fname)).write_text(content)
+        (repo_path / fname).write_text(content)
     subprocess.check_call(["git", "-C", repo_path, "add", "-A"])
     subprocess.check_call([
         "git",
@@ -56,7 +56,7 @@ def create_repo(base_path, files):
         "-m",
         "initial",
     ])
-    return repo_path
+    return str(repo_path)
 
 
 def test_main_deployv(tmp_path):
@@ -66,7 +66,7 @@ def test_main_deployv(tmp_path):
         repo,
         "main",
         "--root-path",
-        os.path.join(str(tmp_path), "t2d"),
+        str(tmp_path / "t2d"),
         "--build-env-args",
         "BUILD_ENV1",
         "--build-env-args",
@@ -76,8 +76,7 @@ def test_main_deployv(tmp_path):
     ]
     scripts = cli_main(return_result=True)
     assert len(scripts) == 1, "Scripts returned should be 1"
-    fname_dkr = os.path.join(scripts[0], "Dockerfile")
-    dkr_content = pathlib.Path(fname_dkr).read_text()
+    dkr_content = (pathlib.Path(scripts[0]) / "Dockerfile").read_text()
     sha_short = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"]).decode("UTF-8")[:7]
     assert "FROM quay.io/vauxoo/myproject:myproject-16.0-%s" % sha_short in dkr_content
     assert "ENV BUILD_ENV1=TRUE" in dkr_content
@@ -88,8 +87,8 @@ def test_main_deployv(tmp_path):
     assert "COPY entrypoint_deployv.sh /entrypoint.sh" in dkr_content
     assert "COPY docker_helper /home/odoo/build" in dkr_content
     for script in ("10-build.sh", "20-run.sh"):
-        script_path = os.path.join(scripts[0], script)
-        assert pathlib.Path(script_path).is_file()
+        script_path = pathlib.Path(scripts[0]) / script
+        assert script_path.is_file()
         assert os.access(script_path, os.X_OK), "%s should be executable" % script
     check_dockerfile_lint(scripts)
 
@@ -101,13 +100,13 @@ def test_main_docker_image_parameter(tmp_path):
         repo,
         "main",
         "--root-path",
-        os.path.join(str(tmp_path), "t2d"),
+        str(tmp_path / "t2d"),
         "--docker-image",
         "quay.io/vauxoo/myproject:custom-tag",
     ]
     scripts = cli_main(return_result=True)
     assert len(scripts) == 1, "Scripts returned should be 1"
-    dkr_content = pathlib.Path(os.path.join(scripts[0], "Dockerfile")).read_text()
+    dkr_content = (pathlib.Path(scripts[0]) / "Dockerfile").read_text()
     assert "FROM quay.io/vauxoo/myproject:custom-tag" in dkr_content
 
 
@@ -118,7 +117,7 @@ def test_main_without_variables_sh(tmp_path):
         repo,
         "main",
         "--root-path",
-        os.path.join(str(tmp_path), "t2d"),
+        str(tmp_path / "t2d"),
     ]
     with pytest.raises(InvalidRepoBranchError):
         cli_main(return_result=True)

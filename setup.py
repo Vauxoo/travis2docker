@@ -3,15 +3,12 @@
 import pathlib
 import re
 from glob import glob
-from os.path import join, splitext
 
 from setuptools import find_packages, setup
 
 
 def read(*names, **kwargs):
-    return (
-        pathlib.Path(join(pathlib.Path(__file__).parent, *names)).open(encoding=kwargs.get("encoding", "utf8")).read()
-    )
+    return pathlib.Path(__file__).parent.joinpath(*names).read_text(encoding=kwargs.get("encoding", "utf8"))
 
 
 setup(
@@ -30,7 +27,7 @@ setup(
     url="https://github.com/vauxoo/travis2docker",
     packages=find_packages("src"),
     package_dir={"": "src"},
-    py_modules=[splitext(pathlib.Path(path).name)[0] for path in glob("src/*.py")],
+    py_modules=[pathlib.Path(path).stem for path in glob("src/*.py")],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
