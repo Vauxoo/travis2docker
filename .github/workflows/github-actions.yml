@@ -24,7 +24,7 @@ jobs:
         include:
           - python: '3.12'
             os: ubuntu-latest
-            tox_env: 'check'
+            tox_env: 'lint'
           - python: '3.12'
             os: ubuntu-latest
             tox_env: 'docs'
