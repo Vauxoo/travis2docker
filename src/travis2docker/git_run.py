@@ -1,6 +1,8 @@
 # pylint: disable=useless-object-inheritance,print-used,except-pass
 
+import contextlib
 import os
+import pathlib
 import re
 import subprocess
 
@@ -25,17 +27,17 @@ class GitRun:
         host, owner, repo = False, False, False
         repo_git_sub = repo_git.replace(":", "/")
         if no_user:
-            repo_git_sub = re.sub(".+@", "", repo_git_sub)
-        repo_git_sub = re.sub(".git$", "", repo_git_sub)
+            repo_git_sub = re.sub(r".+@", "", repo_git_sub)
+        repo_git_sub = re.sub(r".git$", "", repo_git_sub)
         match_object = re.search(r"(?P<host>[^/]+)/(?P<owner>[^/]+)/(?P<repo>[^/]+)", repo_git_sub)
         if match_object:
             host = match_object.group("host")
             owner = match_object.group("owner")
             repo = match_object.group("repo")
-        elif os.path.isdir(repo_git):
+        elif pathlib.Path(repo_git).is_dir():
             host = "local"
-            owner = os.path.basename(repo_git)
-            repo = os.path.basename(os.path.dirname(repo_git))
+            owner = pathlib.Path(repo_git).name
+            repo = pathlib.Path(pathlib.Path(repo_git).parent).name
         return host, owner, repo
 
     @staticmethod
@@ -61,10 +63,8 @@ class GitRun:
         print("cmd list", cmd)
         print("cmd", " ".join(cmd))
         res = None
-        try:
+        with contextlib.suppress(BaseException):
             res = subprocess.check_output(cmd)
-        except BaseException:
-            pass
         if res:
             try:
                 res = res.decode()
@@ -94,9 +94,9 @@ class GitRun:
 
     def update(self):
         """Get a repository git or update it"""
-        if not os.path.isdir(os.path.join(self.path)):
-            os.makedirs(self.path)
-        if not os.path.isdir(os.path.join(self.path, "refs")):
+        if not pathlib.Path(os.path.join(self.path)).is_dir():
+            pathlib.Path(self.path).mkdir(parents=True)
+        if not pathlib.Path(os.path.join(self.path, "refs")).is_dir():
             subprocess.check_output(["git", "clone", "--bare", self.repo_git, self.path])
         self.run(["gc", "--auto", "--prune=all"])
         self.run(["fetch", "-p", "origin", "+refs/heads/*:refs/heads/*"])
