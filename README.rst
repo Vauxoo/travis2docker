@@ -95,6 +95,48 @@ To create container:
 To run the test (into of container):
  `/entrypoint.sh`
 
+Optional tools (``--build-env-args``)
+=====================================
+
+Some development tools are **not** installed by default. They are enabled with
+a flag passed as a build environment variable using ``--build-env-args``, which
+generates an ``ENV <FLAG>=TRUE`` line in the Dockerfile. If the flag is not
+defined, the installation step is skipped.
+
+.. list-table::
+    :widths: 30 70
+    :header-rows: 1
+
+    * - Flag
+      - Installs
+    * - ``VIM_INSTALL``
+      - vim + spf13-vim, vim-openerp, jedi-vim, wakatime and the pylint_odoo/eslint syntastic configuration
+    * - ``ZSH_INSTALL``
+      - zsh + oh-my-zsh with the ``odoo-shippable`` theme
+
+Example enabling more than one::
+
+    travisfile2dockerfile --build-env-args VIM_INSTALL ZSH_INSTALL \
+        git@github.com:Vauxoo/forecast.git 8.0
+
+codebase-memory-deployv
+=======================
+
+The image ships with `codebase-memory-deployv
+<https://pypi.org/project/codebase-memory-deployv>`__, a wrapper that deploys
+`codebase-memory-mcp <https://github.com/DeusData/codebase-memory-mcp>`__
+(code knowledge graph for AI agents) for instances following this layout.
+
+The repository is **not** indexed while building the image. Run inside the
+container::
+
+    codebase-memory-deployv
+
+It installs codebase-memory-mcp if it is missing, derives the project name from
+``${MAIN_REPO_FULL_PATH}/variables.sh`` (e.g. ``forecast_17.0``), and indexes
+``/home/odoo/instance`` in batches of modules. Indexing takes a few minutes on
+a big instance, so it is left as an explicit step for the user.
+
 Depends
 =======
 
