@@ -120,3 +120,4 @@ node_modules/
 bandit*.yaml
 doc8.ini
 pyproject.toml
+.claude/

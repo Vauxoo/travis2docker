@@ -14,14 +14,17 @@ Why does this file exist, and why not put this in __main__?
 """
 
 import argparse
+import logging
 import os
 import pathlib
-from sys import stdout
 
 from . import __version__
 from .exceptions import InvalidRepoBranchError
 from .git_run import GitRun
+from .logging_colored import FORMAT_STR, ColoredFormatter
 from .travis2docker import Travis2Docker
+
+_logger = logging.getLogger(__name__)
 
 
 def variables_sh_read(variables_sh_path):
@@ -50,50 +53,76 @@ def get_git_data(project, path, revision):
 
 
 def main(return_result=False):
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "git_repo_url",
-        help="Specify repository git of work."
-        "\nThis is used to clone it "
-        "and get the variables.sh file of the deployv image"
-        "\nIf your repository is private, "
-        "don't use https url, "
-        "use ssh url",
-    )
-    parser.add_argument(
-        "git_revision",
-        help="Revision git of work."
-        "\nYou can use "
-        "branch name e.g. master or 8.0 "
-        "or pull number with 'pull/#' e.g. pull/1 "
-        "NOTE: A sha e.g. b48228 NOT IMPLEMENTED YET",
-    )
-    parser.add_argument(
-        "--docker-user",
-        dest="docker_user",
-        help="User of work into Dockerfile.\nBased on your docker image.\nDefault: odoo",
-    )
-    parser.add_argument(
-        "--docker-image",
-        dest="default_docker_image",
-        help="Docker image to use by default in Dockerfile."
-        "\nDefault: built from variables.sh as "
-        "'DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT'",
-    )
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColoredFormatter(FORMAT_STR))
+    logging.basicConfig(level=logging.DEBUG, handlers=[handler])
     default_root_path = os.environ.get("TRAVIS2DOCKER_ROOT_PATH")
     if not default_root_path:
         default_root_path = pathlib.Path("~").expanduser()
     default_root_path = str(pathlib.Path(default_root_path) / ".t2d")
+    parser = argparse.ArgumentParser(
+        prog="travisfile2dockerfile",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "travis2docker (t2d) - Generate a development Dockerfile from the\n"
+            "deployv image of a repository.\n"
+            "\n"
+            "Clones the git repository, reads the variables.sh file of the given\n"
+            "revision and generates a Dockerfile plus 10-build.sh and 20-run.sh\n"
+            "helper scripts to build the image and run a development container."
+        ),
+        epilog=(
+            "examples:\n"
+            "  %(prog)s git@github.com:Vauxoo/forecast.git 16.0\n"
+            "  %(prog)s git@github.com:Vauxoo/forecast.git pull/42\n"
+            "  %(prog)s --docker-image quay.io/vauxoo/proj:tag git@github.com:org/proj.git 16.0\n"
+            "  %(prog)s --no-clone --variables-sh-path ./variables.sh foo bar\n"
+            "\n"
+            "environment variables:\n"
+            "  TRAVIS2DOCKER_ROOT_PATH   Override the default root path (~) where\n"
+            "                            the .t2d working directory is created.\n"
+        ),
+    )
+    parser.add_argument(
+        "git_repo_url",
+        help="Git URL of the repository to process. "
+        "It is cloned locally to extract the variables.sh file of the deployv image. "
+        "For private repositories use the SSH URL (git@...) instead of HTTPS.",
+    )
+    parser.add_argument(
+        "git_revision",
+        help="Git revision to process. Accepts a branch name e.g. 'main' or '16.0', "
+        "or a pull request with 'pull/#' e.g. 'pull/1'. "
+        "NOTE: A sha e.g. b48228 is not supported yet.",
+    )
+    parser.add_argument(
+        "--docker-user",
+        dest="docker_user",
+        help="Unix user that runs the commands inside the container. "
+        "It must exist in the base docker image. "
+        "Default: odoo",
+    )
+    parser.add_argument(
+        "--docker-image",
+        dest="default_docker_image",
+        help="Base docker image for the generated Dockerfile, e.g. the one pushed "
+        "by the 'build_docker' pipeline as 'quay.io/vauxoo/PROJECT:TAG'. "
+        "Default: built from variables.sh values as 'DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT'",
+    )
     parser.add_argument(
         "--root-path",
         dest="root_path",
-        help=f"Root path to save scripts generated.\nDefault: {default_root_path}",
         default=default_root_path,
+        help="Root directory to store the generated scripts and the cloned repositories. "
+        "The 'repo/' and 'script/' sub-directories are created inside it. "
+        f"Default: {default_root_path}",
     )
     parser.add_argument(
         "--add-remote",
         dest="remotes",
-        help="Add git remote to git of build path, separated by a comma.\nUse remote name. E.g. 'Vauxoo,moylop260'",
+        help="Comma-separated list of GitHub user/organization names to add as git "
+        "remotes in the instance repositories. E.g. 'Vauxoo,moylop260'. "
+        "Default: none",
     )
     parser.add_argument(
         "--exclude-after-success",
@@ -105,22 +134,25 @@ def main(return_result=False):
     parser.add_argument(
         "--run-extra-args",
         dest="run_extra_args",
-        help="Extra arguments to `docker run RUN_EXTRA_ARGS` command",
-        default="-itP -e LANG=C.UTF-8",
+        help="Extra arguments appended to the `docker run` command of 20-run.sh. "
+        "Note: '-ditP' is always used, no need to add it here. "
+        "Default: '-e LANG=C.UTF-8'",
+        default="-e LANG=C.UTF-8",
     )
     parser.add_argument(
         "--run-extra-cmds",
         dest="run_extra_cmds",
         nargs="*",
         default="",
-        help='Extra commands to run after "run" script. '
-        "Note: You can use \\$IMAGE escaped environment variable."
-        'E.g. "docker rmi -f \\$IMAGE"',
+        help="Extra commands to run at the end of the 20-run.sh script. "
+        "The built image can be referenced with the escaped variable \\$IMAGE. "
+        'E.g. "docker rmi -f \\$IMAGE". '
+        "Default: none",
     )
     parser.add_argument(
         "--build-extra-args",
         dest="build_extra_args",
-        help="Extra arguments to `docker build BUILD_EXTRA_ARGS` command",
+        help="Extra arguments appended to the `docker build` command of 10-build.sh. Default: '--rm'",
         default="--rm",
     )
     parser.add_argument(
@@ -128,7 +160,9 @@ def main(return_result=False):
         dest="build_extra_cmds",
         nargs="*",
         default="",
-        help='Extra commands to run after "build" script. Note: You can use \\$IMAGE escaped environment variable.',
+        help="Extra commands to run at the end of the 10-build.sh script. "
+        "The built image can be referenced with the escaped variable \\$IMAGE. "
+        "Default: none",
     )
     parser.add_argument(
         "--travis-yml-path",
@@ -140,22 +174,26 @@ def main(return_result=False):
         "--variables-sh-path",
         dest="variables_sh_path",
         default=None,
-        help="Optional path of the variables.sh file (or the directory containing it) to use.\n"
-        "Default: Extracted from git repo and git revision.",
+        help="Use a local variables.sh file (or the directory containing it) "
+        "instead of extracting it from the cloned repository. "
+        "Default: extracted from git_repo_url at git_revision",
     )
     parser.add_argument(
         "--no-clone",
         dest="no_clone",
         action="store_true",
         default=False,
-        help="Avoid cloning the repository. It requires --variables-sh-path",
+        help="Skip cloning the repository. It requires --variables-sh-path pointing "
+        "to a local variables.sh file. "
+        "Default: False",
     )
     parser.add_argument(
         "--add-rcfile",
         dest="add_rcfile",
         default="",
-        help="Optional paths of configuration files to "
-        "copy for user's HOME path into container, separated by a comma.",
+        help="Comma-separated list of configuration file paths (e.g. '~/.gitconfig,~/.vimrc') "
+        "to copy into the container user's $HOME directory. "
+        "Default: none",
     )
     parser.add_argument("-v", "--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument(
@@ -171,11 +209,10 @@ def main(return_result=False):
         nargs="*",
         action="append",
         default=[],
-        help="Args used as environment variables "
-        "More info about: https://vsupalov.com/docker-build-time-env-values\n"
-        "E.g. --build-env-args ENVAR1\n"
-        "It generates the following line for Dockerfile:\n"
-        "ARG ENVVAR1\nENV ENVVAR1=$ENVVAR1",
+        help="Environment variable names to enable in the generated Dockerfile. "
+        "Each NAME generates an 'ENV NAME=TRUE' line, used to activate optional "
+        "installation steps of the image. E.g. '--build-env-args VIM_INSTALL ZSH_INSTALL'. "
+        "Default: none",
     )
     parser.add_argument(
         "--deployv",
@@ -189,7 +226,9 @@ def main(return_result=False):
         nargs="*",
         default="",
         dest="build_extra_steps",
-        help="Append these extra steps at the end of the Dockerfile",
+        help="Extra Dockerfile instructions appended at the end of the generated "
+        "Dockerfile, each value as a separate line. "
+        "Default: none",
     )
 
     args = parser.parse_args()
@@ -200,7 +239,7 @@ def main(return_result=False):
     }
     for deprecated_arg, value in deprecated_args.items():
         if value:
-            stdout.write("WARNING: %s is deprecated and its value will be ignored\n" % deprecated_arg)
+            _logger.warning("%s is deprecated and its value will be ignored", deprecated_arg)
     revision = args.git_revision
     git_repo = args.git_repo_url
     git_base = GitRun.get_data_url(git_repo, False)[0]
@@ -213,7 +252,7 @@ def main(return_result=False):
     build_extra_cmds = "\n".join(args.build_extra_cmds)
     run_extra_cmds = "\n".join(args.run_extra_cmds)
     rcfiles_args = args.add_rcfile and args.add_rcfile.split(",")
-    build_env_args = [build_env_args[0] for build_env_args in args.build_env_args]
+    build_env_args = [build_env_arg for build_env_args in args.build_env_args for build_env_arg in build_env_args]
     rcfiles = [
         (pathlib.Path(rc_file).expanduser(), "$HOME/%s" % pathlib.Path(rc_file).name) for rc_file in rcfiles_args
     ]
@@ -264,18 +303,16 @@ def main(return_result=False):
     fname_scripts = t2d.compute_dockerfile()
     if fname_scripts:
         fname_list = "- " + "\n- ".join(fname_scripts)
-        stdout.write("\nGenerated scripts:\n%s\n" % fname_list)
+        _logger.info("Generated scripts:\n%s", fname_list)
         if not default_docker_image:
-            stdout.write("=" * 80)
             # TODO: Add the URL to open the pipelines
-            stdout.write(
-                '\nTIP: Use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
+            _logger.info(
+                'TIP: Use the parameter "--docker-image=quay.io/vauxoo/PROJECT:TAG" '
                 'get the PROJECT:TAG info in your "build_docker" pipeline similar to '
                 '\n"... INFO  - deployv.deployv_addon_gitlab_tools.common.common.push_image - '
-                'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"\n'
+                'Pushing image ... to quay.io/vauxoo/PROJECT:TAG"'
             )
-            stdout.write("=" * 80)
     else:
-        stdout.write("\nNo scripts were generated.")
+        _logger.info("No scripts were generated.")
     if return_result:
         return fname_scripts
