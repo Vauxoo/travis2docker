@@ -1,7 +1,6 @@
 # pylint: disable=useless-object-inheritance,print-used,except-pass
 
 import contextlib
-import os
 import pathlib
 import re
 import subprocess
@@ -17,8 +16,9 @@ def decode_utf(field):
 class GitRun:
     def __init__(self, repo_git, path, path_prefix_repo=False):
         self.repo_git = repo_git
+        path = pathlib.Path(path)
         if path_prefix_repo:
-            path = os.path.join(path, self.url2dirname(repo_git))
+            path /= self.url2dirname(repo_git)
         self.path = path
         self.host, self.owner, self.repo = self.get_data_url(repo_git)
 
@@ -37,7 +37,7 @@ class GitRun:
         elif pathlib.Path(repo_git).is_dir():
             host = "local"
             owner = pathlib.Path(repo_git).name
-            repo = pathlib.Path(pathlib.Path(repo_git).parent).name
+            repo = pathlib.Path(repo_git).parent.name
         return host, owner, repo
 
     @staticmethod
@@ -94,9 +94,9 @@ class GitRun:
 
     def update(self):
         """Get a repository git or update it"""
-        if not pathlib.Path(os.path.join(self.path)).is_dir():
-            pathlib.Path(self.path).mkdir(parents=True)
-        if not pathlib.Path(os.path.join(self.path, "refs")).is_dir():
+        if not self.path.is_dir():
+            self.path.mkdir(parents=True)
+        if not (self.path / "refs").is_dir():
             subprocess.check_output(["git", "clone", "--bare", self.repo_git, self.path])
         self.run(["gc", "--auto", "--prune=all"])
         self.run(["fetch", "-p", "origin", "+refs/heads/*:refs/heads/*"])

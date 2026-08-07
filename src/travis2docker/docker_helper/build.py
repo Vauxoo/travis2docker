@@ -2,7 +2,6 @@
 # pylint: disable=print-used
 
 import glob
-import os
 import pathlib
 import re
 import subprocess
@@ -12,7 +11,7 @@ import sys
 def ssh_keyscan2known_hosts(url, known_hosts_path=None):
     # python3 -c "import build;build.ssh_keyscan2known_hosts('url')"
     if known_hosts_path is None:
-        known_hosts_path = os.path.join(pathlib.Path("~").expanduser(), ".ssh", "known_hosts")
+        known_hosts_path = pathlib.Path("~/.ssh/known_hosts").expanduser()
 
     # Clear current known hosts
     cmd = ["ssh-keygen", "-R", url]
@@ -34,7 +33,7 @@ def git_set_remote(path=None):
         path = "/home/odoo/instance/extra_addons"
     git_re = re.compile(r"([^/|@]+)/([^/]+)/([^/.]+(.git)?)")
     # TODO: Support ssh url
-    path = os.path.join(path, "*", "**", ".git")
+    path = str(pathlib.Path(path) / "*" / "**" / ".git")
     hosts_scanned = set()
     for git_dir in glob.glob(path, recursive=True):
         git_cmd = [
