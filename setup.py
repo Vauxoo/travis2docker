@@ -13,7 +13,7 @@ def read(*names, **kwargs):
 
 setup(
     name="travis2docker",
-    version="6.4.28",
+    version="7.0.0",
     license="BSD-3-Clause",
     description="Script to generate a development Dockerfile from the deployv image of a repository",
     long_description="%s\n%s"
