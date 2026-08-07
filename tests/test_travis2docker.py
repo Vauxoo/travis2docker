@@ -1,5 +1,4 @@
-# No logger planned to use here
-# pylint: disable=print-used,consider-using-with
+# pylint: disable=consider-using-with
 
 import os
 import pathlib

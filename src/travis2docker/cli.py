@@ -21,6 +21,7 @@ import pathlib
 from . import __version__
 from .exceptions import InvalidRepoBranchError
 from .git_run import GitRun
+from .logging_colored import FORMAT_STR, ColoredFormatter
 from .travis2docker import Travis2Docker
 
 _logger = logging.getLogger(__name__)
@@ -52,7 +53,9 @@ def get_git_data(project, path, revision):
 
 
 def main(return_result=False):
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColoredFormatter(FORMAT_STR))
+    logging.basicConfig(level=logging.DEBUG, handlers=[handler])
     default_root_path = os.environ.get("TRAVIS2DOCKER_ROOT_PATH")
     if not default_root_path:
         default_root_path = pathlib.Path("~").expanduser()
