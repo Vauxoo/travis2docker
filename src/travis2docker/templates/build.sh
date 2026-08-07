@@ -102,7 +102,8 @@ install_dev_tools(){
         pre-commit-vauxoo \
         pg-activity \
         nodeenv \
-        pdbpp
+        pdbpp \
+        codebase-memory-deployv
 
     # Symlinks used by vscode and possibly other tools.
     PCV_DIR="$(python3 -c "import pre_commit_vauxoo as pcv; print(pcv.__path__[0])")/cfg"
