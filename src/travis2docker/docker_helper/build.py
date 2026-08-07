@@ -3,6 +3,7 @@
 
 import glob
 import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -11,7 +12,7 @@ import sys
 def ssh_keyscan2known_hosts(url, known_hosts_path=None):
     # python3 -c "import build;build.ssh_keyscan2known_hosts('url')"
     if known_hosts_path is None:
-        known_hosts_path = os.path.join(os.path.expanduser("~"), ".ssh", "known_hosts")
+        known_hosts_path = os.path.join(pathlib.Path("~").expanduser(), ".ssh", "known_hosts")
 
     # Clear current known hosts
     cmd = ["ssh-keygen", "-R", url]
@@ -22,7 +23,7 @@ def ssh_keyscan2known_hosts(url, known_hosts_path=None):
     cmd = ["ssh-keyscan", "-p", "22", url]
     print(" ".join(cmd))
     keys_scanned = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip()
-    with open(known_hosts_path, "r+") as known_hosts_f:
+    with pathlib.Path(known_hosts_path).open("r+") as known_hosts_f:
         known_hosts_f.write("\n" + keys_scanned)
 
 
@@ -31,14 +32,14 @@ def git_set_remote(path=None):
     if path is None:
         # /home/odoo/instance/odoo spends a lot of time
         path = "/home/odoo/instance/extra_addons"
-    git_re = re.compile("([^/|@]+)/([^/]+)/([^/.]+(.git)?)")
+    git_re = re.compile(r"([^/|@]+)/([^/]+)/([^/.]+(.git)?)")
     # TODO: Support ssh url
     path = os.path.join(path, "*", "**", ".git")
     hosts_scanned = set()
     for git_dir in glob.glob(path, recursive=True):
         git_cmd = [
             "git",
-            "--work-tree=%s" % os.path.dirname(git_dir),
+            "--work-tree=%s" % pathlib.Path(git_dir).parent,
             "--git-dir=%s" % git_dir,
         ]
         cmd = git_cmd + ["remote", "get-url", "--push", "origin"]

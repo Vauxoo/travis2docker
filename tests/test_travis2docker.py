@@ -2,6 +2,7 @@
 # pylint: disable=print-used,consider-using-with
 
 import os
+import pathlib
 import subprocess
 import sys
 from shutil import which
@@ -34,20 +35,27 @@ def check_dockerfile_lint(scripts):
         )
         output = pipe.stdout.read().decode("utf-8")
         assert "Check passed" in output, fname_dkr
-        print("Check dockerfile output", output)
 
 
 def create_repo(base_path, files):
     repo_path = os.path.join(str(base_path), "myrepo")
-    os.makedirs(repo_path)
+    pathlib.Path(repo_path).mkdir(parents=True)
     subprocess.check_call(["git", "init", "-b", "main", repo_path])
     for fname, content in files.items():
-        with open(os.path.join(repo_path, fname), "w") as f_repo:
-            f_repo.write(content)
+        pathlib.Path(os.path.join(repo_path, fname)).write_text(content)
     subprocess.check_call(["git", "-C", repo_path, "add", "-A"])
-    subprocess.check_call(
-        ["git", "-C", repo_path, "-c", "user.email=test@test.com", "-c", "user.name=test", "commit", "-m", "initial"]
-    )
+    subprocess.check_call([
+        "git",
+        "-C",
+        repo_path,
+        "-c",
+        "user.email=test@test.com",
+        "-c",
+        "user.name=test",
+        "commit",
+        "-m",
+        "initial",
+    ])
     return repo_path
 
 
@@ -69,8 +77,7 @@ def test_main_deployv(tmp_path):
     scripts = cli_main(return_result=True)
     assert len(scripts) == 1, "Scripts returned should be 1"
     fname_dkr = os.path.join(scripts[0], "Dockerfile")
-    with open(fname_dkr) as f_dkr:
-        dkr_content = f_dkr.read()
+    dkr_content = pathlib.Path(fname_dkr).read_text()
     sha_short = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"]).decode("UTF-8")[:7]
     assert "FROM quay.io/vauxoo/myproject:myproject-16.0-%s" % sha_short in dkr_content
     assert "ENV BUILD_ENV1=TRUE" in dkr_content
@@ -82,7 +89,7 @@ def test_main_deployv(tmp_path):
     assert "COPY docker_helper /home/odoo/build" in dkr_content
     for script in ("10-build.sh", "20-run.sh"):
         script_path = os.path.join(scripts[0], script)
-        assert os.path.isfile(script_path)
+        assert pathlib.Path(script_path).is_file()
         assert os.access(script_path, os.X_OK), "%s should be executable" % script
     check_dockerfile_lint(scripts)
 
@@ -100,8 +107,7 @@ def test_main_docker_image_parameter(tmp_path):
     ]
     scripts = cli_main(return_result=True)
     assert len(scripts) == 1, "Scripts returned should be 1"
-    with open(os.path.join(scripts[0], "Dockerfile")) as f_dkr:
-        dkr_content = f_dkr.read()
+    dkr_content = pathlib.Path(os.path.join(scripts[0], "Dockerfile")).read_text()
     assert "FROM quay.io/vauxoo/myproject:custom-tag" in dkr_content
 
 
