@@ -137,10 +137,9 @@ install_dev_tools(){
         git config --system core.pager delta
         git config --system interactive.diffFilter "delta --color-only"
 
+        git config --system delta.diff-highlight true
         git config --system delta.navigate true
         git config --system delta.line-numbers true
-        git config --system delta.syntax-theme DarkNeon
-        git config --system delta.keep-plus-minus-markers true
     fi
     cat >> /etc/multitail.conf << EOF
 # Odoo log
