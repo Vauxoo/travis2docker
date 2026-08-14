@@ -135,7 +135,7 @@ class Travis2Docker:
         if src.is_dir():
             try:
                 shutil.copytree(src, dest_path)
-            except shutil.Error:  # pylint: disable=except-pass
+            except shutil.Error:  # ruff: ignore[except-pass]
                 pass  # There are permissions errors to copy
         elif src.is_file():
             shutil.copy(src, dest_path)
