@@ -96,24 +96,26 @@ from its values as ``DOCKER_IMAGE_REPO:MAIN_APP-VERSION-SHA_SHORT``; use
 ``--docker-image=quay.io/vauxoo/PROJECT:TAG`` to pick the image pushed by the
 ``build_docker`` pipeline instead.
 
-Optional tools (``--build-env-args``)
-=====================================
+Optional build steps (``--build-env-args``)
+===========================================
 
-Some development tools are **not** installed by default. They are enabled with
-a flag passed as a build environment variable using ``--build-env-args``, which
-generates an ``ENV <FLAG>=TRUE`` line in the Dockerfile. If the flag is not
-defined, the installation step is skipped.
+Some development tools and build steps are **not** enabled by default. They are
+enabled with a flag passed as a build environment variable using
+``--build-env-args``, which generates an ``ENV <FLAG>=TRUE`` line in the
+Dockerfile. If the flag is not defined, the step is skipped.
 
 .. list-table::
     :widths: 30 70
     :header-rows: 1
 
     * - Flag
-      - Installs
+      - Enables
     * - ``VIM_INSTALL``
       - vim + spf13-vim, vim-openerp, jedi-vim, wakatime and the pylint_odoo/eslint syntastic configuration
     * - ``ZSH_INSTALL``
       - zsh + oh-my-zsh with the ``odoo-shippable`` theme
+    * - ``CHOWN_UID_GID``
+      - Aligns the odoo user UID/GID to 5410 to match OrchestSH images. Slow: it re-chowns the whole filesystem
 
 Example enabling more than one::
 
