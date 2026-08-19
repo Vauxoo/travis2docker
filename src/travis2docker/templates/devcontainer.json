@@ -1,0 +1,14 @@
+{
+    "name": "{{ name }}",
+    "image": "{{ image }}",
+    "remoteUser": "{{ user }}",
+    "workspaceFolder": "/home/odoo/instance",
+    "customizations": {
+        "vscode": {
+            "extensions": {{ vscode_extensions | tojson }},
+            "settings": {
+                "python.analysis.extraPaths": ["/home/odoo/instance/odoo"]
+            }
+        }
+    }
+}

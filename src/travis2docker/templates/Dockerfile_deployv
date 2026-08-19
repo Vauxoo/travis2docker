@@ -41,6 +41,24 @@ RUN . /home/odoo/build.sh && \
     [ -e /entrypoint ] && mv /entrypoint /deployv_entrypoint ; \
     mkdir -p /run/sshd
 
+{% if vscode %}
+# DEPLOYV_VSCODE: pre-install the VS Code server and extensions at build time
+# so attaching VS Code to the container does not download anything live
+RUN arch=$(uname -m) && case "$arch" in x86_64) arch=x64 ;; aarch64|arm64) arch=arm64 ;; esac && \
+    tmp_dir=$(mktemp -d) && \
+    curl -fsSL "https://update.code.visualstudio.com/{{ vscode_version }}/server-linux-$arch/stable" \
+        | tar -xz -C "$tmp_dir" --strip-components=1 && \
+    commit=$(sed -n 's/.*"commit": *"\([^"]*\)".*/\1/p' "$tmp_dir/product.json") && \
+    mkdir -p /home/odoo/.vscode-server/bin && \
+    mv "$tmp_dir" "/home/odoo/.vscode-server/bin/$commit" && \
+    "/home/odoo/.vscode-server/bin/$commit/bin/code-server" \
+        --extensions-dir /home/odoo/.vscode-server/extensions \
+        --user-data-dir /home/odoo/.vscode-server/data \
+        {%- for extension in vscode_extensions %}
+        --install-extension {{ extension }} \
+        {%- endfor %}
+    && chown -R {{ user }}:{{ user }} /home/odoo/.vscode-server
+{% endif %}
 {% for step in build_extra_steps %}
 RUN {{ step }}
 {% endfor %}
