@@ -1,5 +1,4 @@
-# No logger planned to use here
-# pylint: disable=print-used,consider-using-with
+# pylint: disable=consider-using-with
 
 import json
 import os
@@ -75,6 +74,7 @@ def test_main_deployv(tmp_path, monkeypatch):
         "BUILD_ENV1",
         "--build-env-args",
         "BUILD_ENV2",
+        "BUILD_ENV3",
         "--build-extra-steps",
         "touch /home/odoo/extra_step_done",
         # Deprecated parameters must still be accepted (and ignored)
@@ -92,6 +92,7 @@ def test_main_deployv(tmp_path, monkeypatch):
     assert "FROM quay.io/vauxoo/myproject:myproject-16.0-%s" % sha_short in dkr_content
     assert "ENV BUILD_ENV1=TRUE" in dkr_content
     assert "ENV BUILD_ENV2=TRUE" in dkr_content
+    assert "ENV BUILD_ENV3=TRUE" in dkr_content
     assert "RUN touch /home/odoo/extra_step_done" in dkr_content
     assert "ENTRYPOINT /entrypoint.sh" in dkr_content
     assert "COPY build.sh /home/odoo/build.sh" in dkr_content

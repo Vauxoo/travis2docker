@@ -1,5 +1,6 @@
-# pylint: disable=useless-object-inheritance,consider-using-with,print-used
+# pylint: disable=useless-object-inheritance,consider-using-with
 import json
+import logging
 import pathlib
 import re
 import shutil
@@ -8,6 +9,8 @@ import subprocess
 from tempfile import gettempdir
 
 import jinja2
+
+_logger = logging.getLogger(__name__)
 
 RE_ENV_STR = r"(?P<var>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}" + r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}"
 RE_EXPORT_STR = r"^(?P<export>export|EXPORT)( )+" + RE_ENV_STR
@@ -166,7 +169,7 @@ class Travis2Docker:
         if src.is_dir():
             try:
                 shutil.copytree(src, dest_path)
-            except shutil.Error:  # pylint: disable=except-pass
+            except shutil.Error:  # ruff: ignore[except-pass]
                 pass  # There are permissions errors to copy
         elif src.is_file():
             shutil.copy(src, dest_path)
@@ -183,11 +186,11 @@ class Travis2Docker:
         if ed_key.is_file():
             to_copy = ed_key
         elif rsa_key.is_file():
-            print("RSA keys are deprecated, consider changing to ed25519")
+            _logger.warning("RSA keys are deprecated, consider changing to ed25519")
             to_copy = rsa_key
 
         if not to_copy:
-            print("No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work.")
+            _logger.warning("No public key found. No key added to ~/.ssh/authorized_keys. SSH login won't work.")
             return
 
         pub_key = to_copy.read_text(encoding="utf-8")
