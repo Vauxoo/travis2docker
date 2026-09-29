@@ -94,7 +94,7 @@ install_dev_tools(){
         # emacs \
         # byobu \
         # multitail  # Set the terminal with red letters build the docker
-    sudo -E pip install -q \
+    pip install -q \
         ipython \
         py-spy \
         virtualenv \
@@ -115,7 +115,7 @@ install_dev_tools(){
     # pre install pre-commit-vauxoo?
     # sudo su odoo -c "git init /tmp/test && cd /tmp/test && pre-commit-vauxoo -f"
     touch /home/odoo/full_test-requirements.txt
-    sudo -E pip install -r /home/odoo/full_test-requirements.txt
+    pip install -r /home/odoo/full_test-requirements.txt
 
     # Install git-delta from .deb since not all Ubuntu versions ship the package
     GIT_DELTA_VERSION=0.18.2

@@ -3,6 +3,7 @@
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from shutil import which
@@ -215,3 +216,17 @@ def test_main_without_variables_sh(tmp_path, monkeypatch):
     ]
     with pytest.raises(InvalidRepoBranchError):
         cli_main(return_result=True)
+
+
+def test_build_sh_pip_without_sudo():
+    """build.sh runs as root in the Dockerfile, so pip must not go through sudo:
+    sudo resets PATH to its secure_path and images whose python lives outside of
+    it (e.g. uv managed /opt/python/current/bin) fail with "sudo: pip: command not found"
+    """
+    build_sh = pathlib.Path(__file__).resolve().parent.parent / "src" / "travis2docker" / "templates" / "build.sh"
+    sudo_pip_lines = [
+        line.strip()
+        for line in build_sh.read_text().splitlines()
+        if not line.strip().startswith("#") and re.search(r"\bsudo\b.*\bpip3?\b", line)
+    ]
+    assert not sudo_pip_lines, "pip called through sudo in build.sh: %s" % sudo_pip_lines
