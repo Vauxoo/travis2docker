@@ -162,6 +162,33 @@ EOF
     done
 }
 
+install_chrome(){
+    if [ -z ${CHROME_INSTALL+x} ];
+    then
+      echo "CHROME_INSTALL is not defined. Skipping Chrome installation."
+      return 0;
+    fi
+    url="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    version="${CHROME_VERSION:-current}"
+    [ "$version" = "OS" ] && version="current"
+    pool="https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${version}_amd64.deb"
+    [ "$version" != "current" ] && wget -q --spider "$pool" && url="$pool"
+    wget -O /tmp/chrome.deb "$url"
+    dpkg -i /tmp/chrome.deb || apt install -y -f
+    dpkg -i /tmp/chrome.deb
+    rm /tmp/chrome.deb
+    if [ "$version" != "current" ] && [ "$url" != "$pool" ];
+    then
+      apt install -y unzip
+      wget -O /tmp/chrome-cft.zip "https://storage.googleapis.com/chrome-for-testing-public/${version%-*}/linux64/chrome-linux64.zip"
+      rm -rf /opt/chrome-linux64
+      unzip -q /tmp/chrome-cft.zip -d /opt
+      ln -sf /opt/chrome-linux64/chrome /usr/bin/google-chrome
+      rm /tmp/chrome-cft.zip
+    fi
+    apt install -y ffmpeg
+}
+
 setup_coverage() {
   echo "export MODULES2TEST=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "/%h,")" >> ${HOME}/.bashrc
   echo "export MODULES2INSTALL=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "%h,")" >> ${HOME}/.bashrc
