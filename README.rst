@@ -114,6 +114,8 @@ Dockerfile. If the flag is not defined, the step is skipped.
       - vim + spf13-vim, vim-openerp, jedi-vim, wakatime and the pylint_odoo/eslint syntastic configuration
     * - ``ZSH_INSTALL``
       - zsh + oh-my-zsh with the ``odoo-shippable`` theme
+    * - ``CHROME_INSTALL``
+      - Google Chrome and ffmpeg, required to run the JS tours the same way CI does. Honors ``CHROME_VERSION`` from ``variables.sh`` like vxci: a pinned version no longer in Google's apt pool is fetched from Chrome for Testing
     * - ``CHOWN_UID_GID``
       - Aligns the odoo user UID/GID to 5410 to match OrchestSH images. Slow: it re-chowns the whole filesystem
 

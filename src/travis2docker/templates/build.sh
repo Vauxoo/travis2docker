@@ -162,6 +162,43 @@ EOF
     done
 }
 
+install_chrome(){
+    # Based on vxci tools_test.py (install_chrome_commands) and common.py (install_test_deps):
+    # https://git.vauxoo.com/devops/vxci/blob/master/vxci/tools_test.py
+    if [ -z ${CHROME_INSTALL+x} ];
+    then
+      echo "CHROME_INSTALL is not defined. Skipping Chrome installation."
+      return 0;
+    fi
+    version="${CHROME_VERSION:-current}"
+    [ "$version" = "OS" ] && version="current"
+    pool_url="https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${version}_amd64.deb"
+    current_url="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+
+    if [ "$version" != "current" ] && wget -q --spider "$pool_url"; then
+      chrome_url="$pool_url"
+    else
+      chrome_url="$current_url"
+    fi
+
+    wget "$chrome_url" -O /tmp/chrome.deb
+    dpkg -i /tmp/chrome.deb || apt install -y -f
+    dpkg -i /tmp/chrome.deb
+    rm /tmp/chrome.deb
+
+    if [ "$version" != "current" ] && [ "$chrome_url" = "$current_url" ]; then
+      apt install -y unzip
+      cft_version="${version%-*}"
+      wget "https://storage.googleapis.com/chrome-for-testing-public/${cft_version}/linux64/chrome-linux64.zip" -O /tmp/chrome-cft.zip
+      rm -rf /opt/chrome-linux64
+      unzip -q /tmp/chrome-cft.zip -d /opt
+      ln -sf /opt/chrome-linux64/chrome /usr/bin/google-chrome
+      rm /tmp/chrome-cft.zip
+    fi
+    # Generates screencast when tour fails
+    apt install -y ffmpeg
+}
+
 setup_coverage() {
   echo "export MODULES2TEST=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "/%h,")" >> ${HOME}/.bashrc
   echo "export MODULES2INSTALL=$(cd ${MAIN_REPO_FULL_PATH} && find * -name "__manifest__.py" -printf "%h,")" >> ${HOME}/.bashrc
