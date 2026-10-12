@@ -22,11 +22,11 @@ if os.getenv('SPELLCHECK'):
 
 source_suffix = '.rst'
 master_doc = 'index'
-project = u'travis2docker'
+project = 'travis2docker'
 year = '2016'
-author = u'Vauxoo'
+author = 'Vauxoo'
 copyright = '{0}, {1}'.format(year, author)
-version = release = u'7.0.5'
+version = release = '7.0.5'
 
 pygments_style = 'trac'
 templates_path = ['.']

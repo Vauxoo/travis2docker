@@ -1,4 +1,4 @@
-# pylint: disable=useless-object-inheritance,except-pass
+# ruff: disable[useless-object-inheritance, try-except-pass]
 
 import contextlib
 import logging
