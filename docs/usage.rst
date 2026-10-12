@@ -4,4 +4,4 @@ Usage
 
 To use travis2docker in a project::
 
-	import travis2docker
+    import travis2docker
