@@ -64,6 +64,8 @@ jobs:
       if: runner.os == 'Windows'
       run: git config --global core.longpaths true
     - name: test
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
         mkdir -p ~/.ssh
         tox -e ${{ matrix.tox_env }} -v
