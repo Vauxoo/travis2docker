@@ -35,6 +35,7 @@ RUN . /home/odoo/build.sh && \
     setup_coverage && \
     local_bin_path && \
     configure_vim && \
+
     configure_zsh && \
     chown_all && \
     [ -e /entrypoint_image ] && mv /entrypoint_image /deployv_entrypoint_image ; \

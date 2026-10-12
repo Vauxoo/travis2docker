@@ -89,7 +89,11 @@ install_dev_tools(){
         gettext \
         net-tools \
         libecpg-dev \
-        iproute2
+        iproute2 && \
+        if ! dpkg -s vim tmux htop >/dev/null 2>&1; then \
+            apt-get update -qq && apt-get install -y --no-install-recommends vim tmux htop && rm -rf /var/lib/apt/lists/*; \
+        fi && \
+
         # aspell aspell-en aspell-es \
         # emacs \
         # byobu \
