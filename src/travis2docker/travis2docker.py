@@ -1,4 +1,5 @@
-# pylint: disable=useless-object-inheritance,consider-using-with
+# pylint: disable=consider-using-with
+# ruff: disable[useless-object-inheritance]
 import json
 import logging
 import pathlib
@@ -54,8 +55,8 @@ class Travis2Docker:
                 lines = subprocess.check_output([code_bin, "--version"]).decode("UTF-8").splitlines()
                 if len(lines) >= 2 and lines[1].strip():
                     return "commit:%s" % lines[1].strip()
-            except (subprocess.CalledProcessError, OSError):
-                pass
+            except (subprocess.CalledProcessError, OSError) as e:
+                _logger.debug("Failed to get VS Code version: %s", e)
         return "latest"
 
     def __init__(
@@ -104,7 +105,10 @@ class Travis2Docker:
             templates_path = templates_dir
         self.copy_paths = copy_paths
         self.os_kwargs = os_kwargs
-        self.jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(templates_path),
+            autoescape=jinja2.select_autoescape(['html', 'xml', 'json'])
+        )
         self.image = image
         if work_path is None:
             self.work_path = pathlib.Path(gettempdir()) / pathlib.Path(__file__).stem
@@ -155,7 +159,7 @@ class Travis2Docker:
         """Generate a .devcontainer.json so VS Code offers reopening the generated
         image as a Development Container"""
         name = self.os_kwargs.get("repo_project") or self.variables_sh_data.get("main_app", "odoo")
-        devcontainer_content = self.jinja_env.get_template("devcontainer.json").render(
+        devcontainer_content = self.jinja_env.get_template("devcontainer.json.jinja").render(
             image=self.new_image, name=name, **self.os_kwargs
         )
         (self.curr_work_path / ".devcontainer.json").write_text(devcontainer_content)
@@ -169,8 +173,8 @@ class Travis2Docker:
         if src.is_dir():
             try:
                 shutil.copytree(src, dest_path)
-            except shutil.Error:  # ruff: ignore[except-pass]
-                pass  # There are permissions errors to copy
+            except shutil.Error as e:
+                _logger.debug("Failed to copy directory %s to %s: %s", src, dest_path, e)
         elif src.is_file():
             shutil.copy(src, dest_path)
         else:
